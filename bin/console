@@ -1,0 +1,11 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use Symfony\Bundle\FrameworkBundle\Console\Application;
+use TacticMedia\ScimServerBundle\Tests\Fixtures\TestKernel;
+
+require dirname(__DIR__).'/vendor/autoload.php';
+
+exit(new Application(new TestKernel('test', true))->run());

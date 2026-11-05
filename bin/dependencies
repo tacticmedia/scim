@@ -1,0 +1,83 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/*
+ * Runs composer-dependency-analyser on an isolated install of each path package in var/dependencies/.
+ * The analyser reads the vendor directory of the composer.json it analyses, so it cannot use the root vendor/.
+ */
+
+$rootDir = dirname(__DIR__);
+
+function run(string ...$command): int
+{
+    passthru(implode(' ', array_map(escapeshellarg(...), $command)), $exitCode);
+
+    return $exitCode;
+}
+
+/**
+ * @return array<string, mixed>
+ */
+function readComposerJson(string $path): array
+{
+    return json_decode((string) file_get_contents($path), true, flags: JSON_THROW_ON_ERROR);
+}
+
+function copyPackage(string $packageDir, string $isolatedDir): int
+{
+    return run('rm', '-rf', $isolatedDir) ?: run('mkdir', '-p', dirname($isolatedDir)) ?: run('cp', '-R', $packageDir, $isolatedDir);
+}
+
+/**
+ * @param array<array<string, mixed>> $repositories
+ */
+function writeIsolatedComposerJson(string $isolatedDir, array $repositories): void
+{
+    $composerJson = readComposerJson($isolatedDir.'/composer.json');
+    $composerJson['repositories'] = $repositories;
+    $composerJson['minimum-stability'] = 'dev';
+    $composerJson['prefer-stable'] = true;
+    // The analyser refuses a composer.json with no package or ext-* requirement. It never reports ext-json, a core extension.
+    $composerJson['require']['ext-json'] ??= '*';
+    file_put_contents($isolatedDir.'/composer.json', json_encode($composerJson, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
+}
+
+/**
+ * @param array<array<string, mixed>> $repositories
+ */
+function analysePackage(string $rootDir, string $packageDir, array $repositories): int
+{
+    $isolatedDir = $rootDir.'/var/dependencies/'.basename($packageDir);
+
+    if (0 !== $exitCode = copyPackage($packageDir, $isolatedDir)) {
+        return $exitCode;
+    }
+
+    writeIsolatedComposerJson($isolatedDir, $repositories);
+    $composer = false === getenv('COMPOSER_BINARY') ? ['composer'] : [PHP_BINARY, getenv('COMPOSER_BINARY')];
+    $analyserConfig = $rootDir.'/composer-dependency-analyser.'.basename($packageDir).'.php';
+
+    return run(...$composer, ...['update', '--working-dir='.$isolatedDir, '--no-interaction', '--no-progress', '--no-plugins', '--no-scripts'])
+        ?: run(PHP_BINARY, $rootDir.'/vendor/bin/composer-dependency-analyser', '--composer-json', $isolatedDir.'/composer.json', ...(is_file($analyserConfig) ? ['--config', $analyserConfig] : []));
+}
+
+$repositories = array_map(
+    static fn (array $repository): array => ['url' => $rootDir.'/'.$repository['url']] + $repository,
+    readComposerJson($rootDir.'/composer.json')['repositories'],
+);
+
+$failedPackages = [];
+
+foreach ($repositories as $repository) {
+    echo PHP_EOL, '==> ', basename($repository['url']), PHP_EOL;
+
+    if (0 !== analysePackage($rootDir, $repository['url'], $repositories)) {
+        $failedPackages[] = basename($repository['url']);
+    }
+}
+
+echo PHP_EOL, [] === $failedPackages ? 'All packages passed.' : 'Failed: '.implode(', ', $failedPackages), PHP_EOL;
+
+exit([] === $failedPackages ? 0 : 1);

@@ -1,0 +1,97 @@
+---
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request: ~
+  workflow_dispatch: ~
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  qa:
+    name: QA
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Lint the workflows
+        run: docker run --rm --volume "$PWD:/repo" --workdir /repo rhysd/actionlint:1.7.12 -color
+      # composer.json is the single source of truth for the extension set.
+      - name: Collect the required PHP extensions
+        id: php-extensions
+        run: |
+          {
+            printf 'list='
+            jq -r '[(.require // {}, .["require-dev"] // {}) | keys[]
+                    | select(startswith("ext-")) | ltrimstr("ext-")]
+                   | unique | join(", ")' composer.json
+          } >> "$GITHUB_OUTPUT"
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: ${{ steps.php-extensions.outputs.list }}
+          coverage: none
+          ini-values: memory_limit=-1
+      - name: Install dependencies
+        uses: ramsey/composer-install@v4
+        with:
+          composer-options: "--no-scripts"
+      - name: Audit dependencies
+        run: composer audit
+      # The gates are composer scripts, so `make qa-check` runs exactly these.
+      - name: Lint
+        run: composer lint
+      - name: Analyse Composer dependencies
+        run: composer dependencies
+      - name: Rector
+        run: composer rector:check
+      - name: Coding standards
+        run: composer cs:check
+      - name: Cache the PHPStan result cache
+        uses: actions/cache@v6
+        with:
+          path: var/phpstan
+          key: phpstan-${{ github.sha }}
+          restore-keys: phpstan-
+      - name: PHPStan
+        run: composer stan
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Collect the required PHP extensions
+        id: php-extensions
+        run: |
+          {
+            printf 'list='
+            jq -r '[(.require // {}, .["require-dev"] // {}) | keys[]
+                    | select(startswith("ext-")) | ltrimstr("ext-")]
+                   | unique | join(", ")' composer.json
+          } >> "$GITHUB_OUTPUT"
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: ${{ steps.php-extensions.outputs.list }}
+          coverage: none
+      - name: Install dependencies
+        uses: ramsey/composer-install@v4
+      - name: Run PHPUnit
+        run: composer test

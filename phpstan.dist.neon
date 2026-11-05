@@ -1,0 +1,27 @@
+parameters:
+    level: 8
+    symfony:
+        consoleApplicationLoader: phpstan/console-application.php
+        containerXmlPath: var/cache/test/TacticMedia_ScimServerBundle_Tests_Fixtures_TestKernelTestDebugContainer.xml
+    tmpDir: var/phpstan
+    bootstrapFiles:
+        - vendor/autoload.php
+    paths:
+        - bin/console
+        - bin/dependencies
+        - scim-server/src/
+        - scim-server-bundle/src/
+        - tests/
+
+    cognitive_complexity:
+        class: 30
+        function: 6
+
+includes:
+    - vendor/composer/pcre/extension.neon
+    - vendor/phpstan/phpstan-symfony/extension.neon
+    - vendor/phpstan/phpstan-symfony/rules.neon
+    - vendor/phpstan/phpstan-phpunit/extension.neon
+    - vendor/phpstan/phpstan-phpunit/rules.neon
+    - vendor/tomasvotruba/cognitive-complexity/config/extension.neon
+    - vendor/phpstan/phpstan/conf/bleedingEdge.neon

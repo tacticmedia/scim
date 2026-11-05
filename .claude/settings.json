@@ -1,0 +1,6 @@
+{
+  "enabledPlugins": {
+    "component-guide-for-symfony@component-guide-for-symfony": true,
+    "ponytail@ponytail": true
+  }
+}

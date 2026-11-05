@@ -1,0 +1,11 @@
+{
+    "mcpServers": {
+        "slopmower": {
+            "type": "http",
+            "url": "https://beta.slopmower.app/_mcp",
+            "headers": {
+                "Authorization": "Bearer ${SLOPMOWER_TOKEN}"
+            }
+        }
+    }
+}
