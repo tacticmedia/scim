@@ -146,7 +146,7 @@ jobs:
     services:
       database:
         image: ${{ matrix.image }}
-        # Each image reads only its own variables.
+        # postgres reads POSTGRES_*; mysql and mariadb read MYSQL_*.
         env:
           POSTGRES_USER: scim
           POSTGRES_PASSWORD: scim
@@ -154,8 +154,6 @@ jobs:
           POSTGRES_INITDB_ARGS: --locale-provider=builtin --builtin-locale=C.UTF-8
           MYSQL_ROOT_PASSWORD: scim
           MYSQL_DATABASE: scim
-          MARIADB_ROOT_PASSWORD: scim
-          MARIADB_DATABASE: scim
         # A host port per entry: act runs the entries on one daemon and keeps the service of a failed entry.
         ports:
           - ${{ matrix.port }}:${{ matrix.service-port }}
@@ -216,6 +214,14 @@ jobs:
           php-version: '8.5'
           extensions: ${{ steps.php-extensions.outputs.list }}
           coverage: none
+      # bump-after-update raises the root floors. "*" leaves each floor to the package that declares it.
+      - name: Relax the root constraints of the package requirements
+        run: |
+          jq --slurpfile library scim-server/composer.json --slurpfile bundle scim-server-bundle/composer.json '
+            ($library + $bundle | map((.require // {}) + (.conflict // {}) | keys[])) as $declared
+            | .["require-dev"] |= with_entries(if .key | IN($declared[]) then .value = "*" else . end)
+          ' composer.json > "$RUNNER_TEMP/composer.json"
+          mv "$RUNNER_TEMP/composer.json" composer.json
       - name: Install the lowest dependencies
         uses: ramsey/composer-install@v4
         with:

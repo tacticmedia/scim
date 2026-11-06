@@ -11,8 +11,8 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use TacticMedia\ScimServer\Tests\Conformance\Fixtures\IdpClient;
 
 /**
- * Microsoft Entra ID, var/research/idp-entra.md sections 4, 5, 6 and 10, default style and aadOptscim062020 style.
- * Entra sends no User-Agent (Q20) and no documented Accept.
+ * Request sequences of Microsoft Entra ID and its SCIM Validator, default style and aadOptscim062020 style. Entra sends
+ * no User-Agent and no documented Accept.
  */
 final class EntraIdTest extends KernelTestCase
 {
@@ -41,7 +41,7 @@ final class EntraIdTest extends KernelTestCase
 
     #[Test]
     #[DataProvider('connectionQueries')]
-    #[TestDox('4.1 Test Connection answers 200 with an empty ListResponse (Q22) for $_dataName')]
+    #[TestDox('Test Connection answers 200 with an empty ListResponse for $_dataName')]
     public function answersTestConnection(string $uri): void
     {
         $this->seed([self::storedUser('u1', 'bjensen')], [self::storedGroup('g1', 'Tour Guides')]);
@@ -50,7 +50,7 @@ final class EntraIdTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('4.2 User create: userName and externalId queries find nothing, POST answers 201 with the full user (Q15, Q17)')]
+    #[TestDox('User create: userName and externalId queries find nothing, POST answers 201 with the full user')]
     public function createsUser(): void
     {
         $this->seed();
@@ -87,7 +87,7 @@ final class EntraIdTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('4.2 A second POST with the same userName answers 409 uniqueness (SCIM Validator)')]
+    #[TestDox('A second POST with the same userName answers 409 uniqueness (SCIM Validator)')]
     public function rejectsDuplicateUser(): void
     {
         $this->seed([$this->entraUser('2441309d85324e7793ae')]);
@@ -98,7 +98,7 @@ final class EntraIdTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('4.2 A legacy POST with root-level nulls, unqualified enterprise attributes and a misspelled URN stores no null (Q24)')]
+    #[TestDox('A legacy POST with root-level nulls, unqualified enterprise attributes and a misspelled URN stores no null')]
     public function ignoresNullsOnCreate(): void
     {
         $this->seed();
@@ -133,7 +133,7 @@ final class EntraIdTest extends KernelTestCase
      */
     #[Test]
     #[DataProvider('enterpriseForms')]
-    #[TestDox('4.2 POST stores enterprise attributes sent as $_dataName, also when "schemas" lacks the extension URN (Q16)')]
+    #[TestDox('POST stores enterprise attributes sent as $_dataName, also when "schemas" lacks the extension URN')]
     public function createsEnterpriseAttributes(array $enterprise): void
     {
         $this->seed();
@@ -155,7 +155,7 @@ final class EntraIdTest extends KernelTestCase
 
     #[Test]
     #[DataProvider('opCases')]
-    #[TestDox('4.3 User update, $_dataName: GET, then PATCH of emails[type eq "work"].value, name.familyName, userName and nickName answers 204 (Q1, Q5)')]
+    #[TestDox('User update, $_dataName: GET, then PATCH of emails[type eq "work"].value, name.familyName, userName and nickName answers 204')]
     public function updatesUser(string $add, string $replace): void
     {
         $this->seed([$this->entraUser('6764549bef60420686bc')]);
@@ -206,7 +206,7 @@ final class EntraIdTest extends KernelTestCase
      */
     #[Test]
     #[DataProvider('multiAttributeReplacements')]
-    #[TestDox('4.3 Replace several attributes, $_dataName (Q4, Q7)')]
+    #[TestDox('Replace several attributes, $_dataName')]
     public function replacesSeveralAttributes(array $operations, array $expected): void
     {
         $this->seed([$this->entraUser('6764549bef60420686bc')]);
@@ -227,7 +227,7 @@ final class EntraIdTest extends KernelTestCase
 
     #[Test]
     #[DataProvider('opCases')]
-    #[TestDox('4.3 Filtered paths that match nothing create the element from the eq terms, $_dataName (Q6, Q19, erratum 8097)')]
+    #[TestDox('Filtered paths that match nothing create the element from the eq terms, $_dataName (erratum 8097)')]
     public function createsFilteredElements(string $add, string $replace): void
     {
         $this->seed([self::storedUser('6764549bef60420686bc', self::USER_NAME)]);
@@ -255,12 +255,12 @@ final class EntraIdTest extends KernelTestCase
     {
         $ref = 'http://.../scim/Users/'.self::MANAGER;
 
-        yield 'M1, path without URN, array value' => [['op' => 'Add', 'path' => 'manager', 'value' => [['$ref' => $ref, 'value' => self::MANAGER]]], ['$ref' => $ref, 'value' => self::MANAGER]];
-        yield 'M2, bare string id (Q11)' => [['op' => 'Add', 'path' => self::ENTERPRISE.':manager', 'value' => self::MANAGER], ['value' => self::MANAGER, '$ref' => self::BASE_URL.'/Users/'.self::MANAGER]];
-        yield 'M3, object value' => [['op' => 'Add', 'path' => self::ENTERPRISE.':manager', 'value' => ['value' => self::MANAGER]], ['value' => self::MANAGER, '$ref' => self::BASE_URL.'/Users/'.self::MANAGER]];
-        yield 'M4, replace of manager.value' => [['op' => 'replace', 'path' => self::ENTERPRISE.':manager.value', 'value' => self::MANAGER], ['value' => self::MANAGER, '$ref' => self::BASE_URL.'/Users/'.self::MANAGER]];
-        yield 'M5, path-less add' => [['op' => 'Add', 'value' => [self::ENTERPRISE.':manager' => ['value' => self::MANAGER]]], ['value' => self::MANAGER, '$ref' => self::BASE_URL.'/Users/'.self::MANAGER]];
-        yield 'M5, path-less replace' => [['op' => 'replace', 'value' => [self::ENTERPRISE.':manager' => ['value' => self::MANAGER]]], ['value' => self::MANAGER, '$ref' => self::BASE_URL.'/Users/'.self::MANAGER]];
+        yield 'path without URN, array value' => [['op' => 'Add', 'path' => 'manager', 'value' => [['$ref' => $ref, 'value' => self::MANAGER]]], ['$ref' => $ref, 'value' => self::MANAGER]];
+        yield 'bare string id' => [['op' => 'Add', 'path' => self::ENTERPRISE.':manager', 'value' => self::MANAGER], ['value' => self::MANAGER, '$ref' => self::BASE_URL.'/Users/'.self::MANAGER]];
+        yield 'object value' => [['op' => 'Add', 'path' => self::ENTERPRISE.':manager', 'value' => ['value' => self::MANAGER]], ['value' => self::MANAGER, '$ref' => self::BASE_URL.'/Users/'.self::MANAGER]];
+        yield 'replace of manager.value' => [['op' => 'replace', 'path' => self::ENTERPRISE.':manager.value', 'value' => self::MANAGER], ['value' => self::MANAGER, '$ref' => self::BASE_URL.'/Users/'.self::MANAGER]];
+        yield 'path-less add' => [['op' => 'Add', 'value' => [self::ENTERPRISE.':manager' => ['value' => self::MANAGER]]], ['value' => self::MANAGER, '$ref' => self::BASE_URL.'/Users/'.self::MANAGER]];
+        yield 'path-less replace' => [['op' => 'replace', 'value' => [self::ENTERPRISE.':manager' => ['value' => self::MANAGER]]], ['value' => self::MANAGER, '$ref' => self::BASE_URL.'/Users/'.self::MANAGER]];
     }
 
     /**
@@ -269,7 +269,7 @@ final class EntraIdTest extends KernelTestCase
      */
     #[Test]
     #[DataProvider('managerAssignments')]
-    #[TestDox('4.4 Manager set with $_dataName answers 204, and GET returns the complex form')]
+    #[TestDox('Manager set with $_dataName answers 204, and GET returns the complex form')]
     public function setsManager(array $operation, array $expected): void
     {
         $this->seed([self::storedUser('a0a0a0a0-bbbb-cccc-dddd-e1e1e1e1e1e1', self::USER_NAME)]);
@@ -282,7 +282,7 @@ final class EntraIdTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('4.4 The manager reference query with attributes=id finds the user only when the manager matches')]
+    #[TestDox('The manager reference query with attributes=id finds the user only when the manager matches')]
     public function answersManagerQuery(): void
     {
         $this->seed([self::storedUser('a0a0a0a0-bbbb-cccc-dddd-e1e1e1e1e1e1', self::USER_NAME, ['schemas' => [self::USER, self::ENTERPRISE], self::ENTERPRISE => ['manager' => ['value' => self::MANAGER]]])]);
@@ -298,8 +298,8 @@ final class EntraIdTest extends KernelTestCase
      */
     public static function managerRemovals(): iterable
     {
-        yield 'M6, remove' => [['op' => 'remove', 'path' => self::ENTERPRISE.':manager']];
-        yield 'M7, replace with "" (Q12)' => [['op' => 'replace', 'path' => self::ENTERPRISE.':manager', 'value' => '']];
+        yield 'remove' => [['op' => 'remove', 'path' => self::ENTERPRISE.':manager']];
+        yield 'replace with ""' => [['op' => 'replace', 'path' => self::ENTERPRISE.':manager', 'value' => '']];
         yield 'replace with null (SCIM_Null_Update_Test)' => [['op' => 'replace', 'path' => self::ENTERPRISE.':manager', 'value' => null]];
     }
 
@@ -308,7 +308,7 @@ final class EntraIdTest extends KernelTestCase
      */
     #[Test]
     #[DataProvider('managerRemovals')]
-    #[TestDox('4.4 Manager clear with $_dataName answers 204 and removes the manager')]
+    #[TestDox('Manager clear with $_dataName answers 204 and removes the manager')]
     public function clearsManager(array $operation): void
     {
         $this->seed([self::storedUser('a0a0a0a0-bbbb-cccc-dddd-e1e1e1e1e1e1', self::USER_NAME, ['schemas' => [self::USER, self::ENTERPRISE], self::ENTERPRISE => ['manager' => ['value' => self::MANAGER]]])]);
@@ -325,7 +325,7 @@ final class EntraIdTest extends KernelTestCase
      */
     public static function activeToggles(): iterable
     {
-        yield 'default style, "False" and "True" (Q2)' => [
+        yield 'default style, "False" and "True"' => [
             self::patchOp(['op' => 'Replace', 'path' => 'active', 'value' => 'False']),
             self::patchOp(['op' => 'Replace', 'path' => 'active', 'value' => 'True']),
         ];
@@ -345,7 +345,7 @@ final class EntraIdTest extends KernelTestCase
      */
     #[Test]
     #[DataProvider('activeToggles')]
-    #[TestDox('4.5 Disable and restore, $_dataName: the inactive user stays visible by id and by filter (Q21)')]
+    #[TestDox('Disable and restore, $_dataName: the inactive user stays visible by id and by filter')]
     public function disablesAndRestoresUser(array $disable, array $restore): void
     {
         $this->seed([$this->entraUser('6764549bef60420686bc')]);
@@ -361,7 +361,7 @@ final class EntraIdTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('4.6 Hard delete answers 204; afterwards GET and DELETE answer 404 and the filter finds nothing')]
+    #[TestDox('Hard delete answers 204; afterwards GET and DELETE answer 404 and the filter finds nothing')]
     public function deletesUser(): void
     {
         $this->seed([$this->entraUser('5171a35d82074e068ce2')]);
@@ -374,7 +374,7 @@ final class EntraIdTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('10 Validator cleanup: replace active false, then DELETE')]
+    #[TestDox('Validator cleanup: replace active false, then DELETE')]
     public function cleansUp(): void
     {
         $this->seed([$this->entraUser('5171a35d82074e068ce2')]);
@@ -406,7 +406,7 @@ final class EntraIdTest extends KernelTestCase
      */
     #[Test]
     #[DataProvider('nullUpdates')]
-    #[TestDox('10 SCIM_Null_Update_Test $_dataName clears the attributes')]
+    #[TestDox('SCIM_Null_Update_Test $_dataName clears the attributes')]
     public function clearsAttributes(array $operations): void
     {
         $this->seed([$this->entraUser('6764549bef60420686bc', ['title' => 'Tour Guide', 'nickName' => 'Babs', self::ENTERPRISE => ['department' => 'Tour Operations']])]);
@@ -419,7 +419,7 @@ final class EntraIdTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('4.7 Group create: the displayName query finds nothing, POST answers 201 (Q13, Q15, Q17)')]
+    #[TestDox('Group create: the displayName query finds nothing, POST answers 201')]
     public function createsGroup(): void
     {
         $this->seed();
@@ -446,7 +446,7 @@ final class EntraIdTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('4.7 A second group with the same displayName answers 409 uniqueness')]
+    #[TestDox('A second group with the same displayName answers 409 uniqueness')]
     public function rejectsDuplicateGroupName(): void
     {
         $this->seed(groups: [self::storedGroup('8c601452cc934a9ebef9', 'displayName')]);
@@ -455,7 +455,7 @@ final class EntraIdTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('4.8 Member add with "$ref": null answers 204; adding the same member again changes nothing (Q10)')]
+    #[TestDox('Member add with "$ref": null answers 204; adding the same member again changes nothing')]
     public function addsMembers(): void
     {
         $this->seed([self::storedUser(self::MEMBER, 'bjensen'), self::storedUser('u2', 'jsmith')], [self::storedGroup('a99962b9f99d4c4fac67', 'displayName')]);
@@ -475,9 +475,9 @@ final class EntraIdTest extends KernelTestCase
      */
     public static function memberRemovals(): iterable
     {
-        yield 'default style with "$ref": null (Q8)' => [['op' => 'Remove', 'path' => 'members', 'value' => [['$ref' => null, 'value' => self::MEMBER]]]];
-        yield 'default style without "$ref" (Q8)' => [['op' => 'Remove', 'path' => 'members', 'value' => [['value' => self::MEMBER]]]];
-        yield 'aadOptscim062020 style, value filter (Q9)' => [['op' => 'remove', 'path' => 'members[value eq "'.self::MEMBER.'"]']];
+        yield 'default style with "$ref": null' => [['op' => 'Remove', 'path' => 'members', 'value' => [['$ref' => null, 'value' => self::MEMBER]]]];
+        yield 'default style without "$ref"' => [['op' => 'Remove', 'path' => 'members', 'value' => [['value' => self::MEMBER]]]];
+        yield 'aadOptscim062020 style, value filter' => [['op' => 'remove', 'path' => 'members[value eq "'.self::MEMBER.'"]']];
     }
 
     /**
@@ -485,7 +485,7 @@ final class EntraIdTest extends KernelTestCase
      */
     #[Test]
     #[DataProvider('memberRemovals')]
-    #[TestDox('4.9 Member remove, $_dataName, removes only that member and answers 204')]
+    #[TestDox('Member remove, $_dataName, removes only that member and answers 204')]
     public function removesMember(array $operation): void
     {
         $this->seed(groups: [self::storedGroup('a99962b9f99d4c4fac67', 'displayName', ['members' => [['value' => self::MEMBER], ['value' => 'u2']]])]);
@@ -512,7 +512,7 @@ final class EntraIdTest extends KernelTestCase
      */
     #[Test]
     #[DataProvider('renames')]
-    #[TestDox('4.10 Group rename, $_dataName: GET without members, then PATCH answers 204 (Q13)')]
+    #[TestDox('Group rename, $_dataName: GET without members, then PATCH answers 204')]
     public function renamesGroup(array $operation): void
     {
         $this->seed(groups: [self::storedGroup('fa2ce26709934589afc5', 'displayName', ['externalId' => '60f1bb27-2e1e-402d-bcc4-ec999564a194', 'members' => [['value' => self::MEMBER]]])]);
@@ -526,7 +526,7 @@ final class EntraIdTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('4.11 The membership check finds the group, with only its id, only when the user is a member')]
+    #[TestDox('The membership check finds the group, with only its id, only when the user is a member')]
     public function answersMembershipCheck(): void
     {
         $this->seed(groups: [self::storedGroup('54D382A4-2050-4C03-94D1-E769F1D15682', 'displayName', ['members' => [['value' => '2819c223-7f76-453a-919d-413861904646']]])]);
@@ -538,7 +538,7 @@ final class EntraIdTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('4.11 Unquoted filter values of the old diagrams answer 400 invalidFilter, as RFC 7644 Figure 1 requires (Q23)')]
+    #[TestDox('Unquoted filter values of the old diagrams answer 400 invalidFilter, as RFC 7644 Figure 1 requires')]
     public function rejectsUnquotedFilterValues(): void
     {
         $this->seed();
@@ -550,7 +550,7 @@ final class EntraIdTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('4.12 Group delete answers 204; the displayName query then finds nothing and the members stay')]
+    #[TestDox('Group delete answers 204; the displayName query then finds nothing and the members stay')]
     public function deletesGroup(): void
     {
         $this->seed([self::storedUser(self::MEMBER, 'bjensen')], [self::storedGroup('cdb1ce18f65944079d37', 'displayName', ['members' => [['value' => self::MEMBER]]])]);
@@ -562,7 +562,7 @@ final class EntraIdTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('4.13 Roles: JSON-encoded role values are stored as strings (Q18), roles[primary eq "True"] paths create the primary role (Q3)')]
+    #[TestDox('Roles: JSON-encoded role values are stored as strings, roles[primary eq "True"] paths create the primary role')]
     public function updatesRoles(): void
     {
         $this->seed([$this->entraUser('6764549bef60420686bc'), $this->entraUser('u2', ['userName' => 'jsmith'])]);
@@ -581,7 +581,7 @@ final class EntraIdTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('4.13 Roles: AssertiveAppRoleAssignmentsComplex replaces all roles')]
+    #[TestDox('Roles: AssertiveAppRoleAssignmentsComplex replaces all roles')]
     public function replacesRoles(): void
     {
         $this->seed([$this->entraUser('6764549bef60420686bc', ['roles' => [['value' => 'Admin']]])]);
@@ -596,7 +596,7 @@ final class EntraIdTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('10 A phoneNumbers primary that is not a boolean answers 400 invalidValue (Q26)')]
+    #[TestDox('A phoneNumbers primary that is not a boolean answers 400 invalidValue')]
     public function rejectsNonBooleanPrimary(): void
     {
         $this->seed();
@@ -607,7 +607,7 @@ final class EntraIdTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('4.14 /Schemas lists the User, EnterpriseUser and Group schemas without null values and with camel case keywords')]
+    #[TestDox('/Schemas lists the User, EnterpriseUser and Group schemas without null values and with camel case keywords')]
     public function discoversSchemas(): void
     {
         $this->seed();
@@ -624,7 +624,7 @@ final class EntraIdTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('4.15 SCIM_User_Pagination_Test: pages of 5 echo startIndex, report the total and cover every user once')]
+    #[TestDox('SCIM_User_Pagination_Test: pages of 5 echo startIndex, report the total and cover every user once')]
     public function paginatesUsers(): void
     {
         $this->seed(array_map(static fn (int $i): array => self::storedUser('u'.$i, 'user'.$i), range(1, 12)));

@@ -86,7 +86,7 @@ final class ReplaceTest extends KernelTestCase
      */
     #[Test]
     #[DataProvider('unreturnedValues')]
-    #[TestDox('PUT and a password that GET never returns: $_dataName (Okta quirk 4)')]
+    #[TestDox('PUT and a password that GET never returns: $_dataName')]
     public function keepsUnreturnedValues(array $body, ?string $password): void
     {
         $server = $this->server([self::storedUser('u1', 'bjensen', ['password' => 'secret', self::ENTERPRISE => ['employeeNumber' => '701984']])]);

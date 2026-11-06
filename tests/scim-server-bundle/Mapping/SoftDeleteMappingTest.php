@@ -27,12 +27,12 @@ final class SoftDeleteMappingTest extends KernelTestCase
     private const string WRONG_TYPE = '#[ScimSoftDelete] needs bool or a nullable DateTimeInterface, the member is %s. Type $%s as bool or ?\DateTimeImmutable.';
 
     #[Test]
-    #[TestDox('#[ScimSoftDelete] compiles on a bool, a nullable DateTime and a private property of a parent')]
+    #[TestDox('#[ScimSoftDelete] compiles on a bool, a nullable DateTime and a private property of a parent; revive defaults to false')]
     public function compiles(): void
     {
-        self::assertEquals(new SoftDelete(SoftDeleteFlag::class, 'deleted', null, true), new AttributeLoader()->load(SoftDeleteFlag::class)->softDelete);
-        self::assertEquals(new SoftDelete(SoftDeleteTime::class, 'deletedAt', \DateTime::class, false), new AttributeLoader()->load(SoftDeleteTime::class)->softDelete);
-        self::assertEquals(new SoftDelete(SoftDeleteParent::class, 'deletedAt', \DateTimeImmutable::class, true), new AttributeLoader()->load(SoftDeleteChild::class)->softDelete);
+        self::assertEquals(new SoftDelete(SoftDeleteFlag::class, 'deleted', null, false), new AttributeLoader()->load(SoftDeleteFlag::class)->softDelete);
+        self::assertEquals(new SoftDelete(SoftDeleteTime::class, 'deletedAt', \DateTime::class, true), new AttributeLoader()->load(SoftDeleteTime::class)->softDelete);
+        self::assertEquals(new SoftDelete(SoftDeleteParent::class, 'deletedAt', \DateTimeImmutable::class, false), new AttributeLoader()->load(SoftDeleteChild::class)->softDelete);
         self::assertNull(new AttributeLoader()->load(Group::class)->softDelete);
     }
 

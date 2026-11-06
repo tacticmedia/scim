@@ -145,13 +145,70 @@ final class CursorPaginationTest extends KernelTestCase
         self::assertScimError($this->send($this->fiveUsers(), $method, $uri, $body), 400, $scimType, $detail);
     }
 
-    #[Test]
-    #[TestDox('count=0 answers totalResults only, without nextCursor')]
-    public function answersCountZero(): void
+    /**
+     * @return iterable<string, array{string, bool}>
+     */
+    public static function countZeroQueries(): iterable
     {
-        $response = $this->send($this->fiveUsers(), 'GET', '/Users?cursor&count=0');
+        yield 'a CursorPaginatedRepository' => ['/Users?cursor&count=0', true];
+        yield 'a repository without CursorPaginatedRepository' => ['/Users?cursor&count=0', false];
+        yield 'the root' => ['/?cursor&count=0', true];
+        yield 'the root with sortBy' => ['/?cursor&count=0&sortBy=displayName', true];
+    }
+
+    #[Test]
+    #[DataProvider('countZeroQueries')]
+    #[TestDox('count=0 on $_dataName answers totalResults only, without nextCursor')]
+    public function answersCountZero(string $uri, bool $positioned): void
+    {
+        $server = $positioned ? $this->fiveUsers() : $this->serverWith(new RecordingRepository(new InMemoryResourceRepository(CoreResourceTypes::user(), new MockClock(), $this->users())));
+
+        $response = $this->send($server, 'GET', $uri);
 
         self::assertSame('{"schemas":["urn:ietf:params:scim:api:messages:2.0:ListResponse"],"totalResults":5,"itemsPerPage":0,"Resources":[]}', $response->getContent());
+    }
+
+    /**
+     * @return iterable<string, array{string, bool, int}>
+     */
+    public static function oversizedPages(): iterable
+    {
+        yield 'index' => ['/Users?count=1', true, 1];
+        yield 'a cursor by position' => ['/Users?cursor&count=1', true, 1];
+        yield 'a cursor by offset' => ['/Users?cursor&count=1', false, 1];
+        yield 'a cursor with count=0' => ['/Users?cursor&count=0', true, 0];
+    }
+
+    #[Test]
+    #[DataProvider('oversizedPages')]
+    #[TestDox('A repository page longer than count is cut: $_dataName')]
+    public function cutsOversizedPage(string $uri, bool $native, int $itemsPerPage): void
+    {
+        $repository = new SwitchableCursorRepository(new InMemoryResourceRepository(CoreResourceTypes::user(), new MockClock(), $this->users()));
+        $repository->native = $native;
+        $repository->oversized = true;
+
+        self::assertSame($itemsPerPage, self::json($this->send($this->serverWith($repository), 'GET', $uri))['itemsPerPage'] ?? null);
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function longSortValues(): iterable
+    {
+        yield '250 emoji' => [str_repeat("\u{1F600}", 249)];
+        yield '3500 ASCII characters' => [str_repeat('x', 3499)];
+    }
+
+    #[Test]
+    #[DataProvider('longSortValues')]
+    #[TestDox('A traversal sorted by values of $_dataName reaches the last page')]
+    public function traversesLongSortValues(string $suffix): void
+    {
+        $users = array_map(static fn (string $letter): array => self::storedUser('u'.$letter, $letter, ['displayName' => $letter.$suffix]), ['a', 'b', 'c']);
+        $server = $this->server($users, cursorKey: self::KEY);
+
+        self::assertSame([['ua'], ['ub'], ['uc']], array_map(self::ids(...), $this->traverse($server, '/Users', ['count' => 1, 'sortBy' => 'displayName'])));
     }
 
     #[Test]

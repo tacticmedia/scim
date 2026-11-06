@@ -24,7 +24,7 @@ final class ReferenceUrlsTest extends KernelTestCase
         yield 'type User' => [['value' => 'u1', 'type' => 'User'], ['value' => 'u1', 'type' => 'User', '$ref' => self::BASE_URL.'/Users/u1']];
         yield 'type in another case' => [['value' => 'g2', 'type' => 'group'], ['value' => 'g2', 'type' => 'group', '$ref' => self::BASE_URL.'/Groups/g2']];
         yield 'id with reserved characters' => [['value' => 'a/b c', 'type' => 'User'], ['value' => 'a/b c', 'type' => 'User', '$ref' => self::BASE_URL.'/Users/a%2Fb%20c']];
-        yield '"$ref": null (Entra Q10)' => [['$ref' => null, 'value' => 'u1', 'type' => 'User'], ['$ref' => self::BASE_URL.'/Users/u1', 'value' => 'u1', 'type' => 'User']];
+        yield '"$ref": null' => [['$ref' => null, 'value' => 'u1', 'type' => 'User'], ['$ref' => self::BASE_URL.'/Users/u1', 'value' => 'u1', 'type' => 'User']];
         yield 'a $ref of the repository' => [['value' => 'u1', 'type' => 'User', '$ref' => '../Users/u1'], ['value' => 'u1', 'type' => 'User', '$ref' => '../Users/u1']];
         yield 'no type: two referenceTypes' => [['value' => 'u1'], ['value' => 'u1']];
         yield 'a type that no referenceType names' => [['value' => 'u1', 'type' => 'Device'], ['value' => 'u1', 'type' => 'Device']];

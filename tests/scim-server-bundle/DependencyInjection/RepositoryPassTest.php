@@ -8,6 +8,7 @@ use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestDox;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\DependencyInjection\Argument\ServiceLocatorArgument;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use TacticMedia\ScimServerBundle\DependencyInjection\Compiler\RepositoryPass;
@@ -27,11 +28,12 @@ use TacticMedia\ScimServerBundle\Tests\Object\Fixtures\Account;
 final class RepositoryPassTest extends KernelTestCase
 {
     #[Test]
-    #[TestDox('Each mapped class and raw repository gets a tagged repository service and a server entry')]
+    #[TestDox('Each mapped class and raw repository gets a tagged repository service and a server entry; debug:scim gets the mapped ones')]
     public function repositoriesAreRegistered(): void
     {
         $recorded = $this->compile([], [], Group::class, User::class, PrinterRepository::class);
         $server = $recorded->definition('tacticmedia_scim_server.server');
+        $debugRepositories = $recorded->definition('tacticmedia_scim_server.command.debug')->getArgument(6);
 
         self::assertSame([
             PrinterRepository::class => [['name' => 'Printer']],
@@ -44,6 +46,8 @@ final class RepositoryPassTest extends KernelTestCase
             ['tacticmedia_scim_server.repository.group', 'tacticmedia_scim_server.repository.user', 'tacticmedia_scim_server.repository.printer'],
             array_map(static fn (Definition $registered): string => (string) $registered->getArgument(1), $this->list($server->getArgument(0))),
         );
+        self::assertInstanceOf(ServiceLocatorArgument::class, $debugRepositories);
+        self::assertSame(['Group' => 'tacticmedia_scim_server.repository.group', 'User' => 'tacticmedia_scim_server.repository.user'], array_map(strval(...), $debugRepositories->getValues()));
     }
 
     #[Test]

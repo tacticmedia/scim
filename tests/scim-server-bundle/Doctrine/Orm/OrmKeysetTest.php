@@ -14,6 +14,7 @@ use TacticMedia\ScimServer\Exception\ScimException;
 use TacticMedia\ScimServer\Path\AttributePath;
 use TacticMedia\ScimServer\Query\ListQuery;
 use TacticMedia\ScimServer\Query\SortOrder;
+use TacticMedia\ScimServerBundle\Doctrine\Orm\OrmKeyset;
 use TacticMedia\ScimServerBundle\Mapping\AttributeLoader;
 use TacticMedia\ScimServerBundle\Mapping\AttributeMapping;
 use TacticMedia\ScimServerBundle\Mapping\ResourceMapping;
@@ -132,6 +133,24 @@ final class OrmKeysetTest extends KernelTestCase
         $mapping = $this->seedShifts();
 
         self::assertNull(self::store()->queryAfter($mapping, new ObjectQuery(null, [$this->at($mapping, 'code')], SortOrder::Ascending, 1, 1), null));
+    }
+
+    #[Test]
+    #[DataProvider('laterTypes')]
+    #[TestDox('The type $_dataName of a DBAL 4 version after 4.0 has keyset pages')]
+    public function namesLaterTypes(string $type): void
+    {
+        self::assertContains($type, new \ReflectionClassConstant(OrmKeyset::class, 'SCALAR_TYPES')->getValue());
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function laterTypes(): iterable
+    {
+        foreach (['enum', 'datetime_utc', 'datetime_utc_immutable'] as $type) {
+            yield $type => [$type];
+        }
     }
 
     /**

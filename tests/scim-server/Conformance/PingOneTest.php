@@ -10,8 +10,8 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use TacticMedia\ScimServer\Tests\Conformance\Fixtures\IdpClient;
 
 /**
- * The PingOne outbound SCIM connector, var/research/idp-okta-others.md section 5 and the PingOne quirks of section 7.
- * The report names no request headers; these are the OAuth 2 Bearer Token mode.
+ * Request sequences of the PingOne outbound SCIM connector. No source names the request headers; these are the
+ * OAuth 2 Bearer Token mode.
  */
 final class PingOneTest extends KernelTestCase
 {
@@ -20,7 +20,7 @@ final class PingOneTest extends KernelTestCase
     private const array BODY_HEADERS = ['Content-Type' => 'application/scim+json'];
 
     #[Test]
-    #[TestDox('User matching: admin-written filters with capitalized operators match (quirk 36)')]
+    #[TestDox('User matching: admin-written filters with capitalized operators match')]
     public function matchesCapitalizedOperators(): void
     {
         $this->seed([self::storedUser('u1', 'bjensen', ['emails' => [['value' => 'bjensen@example.com']]]), self::storedUser('u2', 'jsmith')]);
@@ -31,7 +31,7 @@ final class PingOneTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('User matching: a filter on an attribute that the schema does not define answers 400 invalidFilter (quirk 37)')]
+    #[TestDox('User matching: a filter on an attribute that the schema does not define answers 400 invalidFilter')]
     public function rejectsUnknownFilterAttribute(): void
     {
         $this->seed([self::storedUser('u1', 'bjensen')]);
@@ -43,7 +43,7 @@ final class PingOneTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('Create: two primary emails keep only the first primary (quirk 43), a custom extension URN is ignored (quirk 45)')]
+    #[TestDox('Create: two primary emails keep only the first primary, a custom extension URN is ignored')]
     public function normalizesPrimaryValues(): void
     {
         $this->seed();
@@ -61,7 +61,7 @@ final class PingOneTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('Remove Action: Disable sends active false, Delete sends DELETE; both answer 204 (quirks 25, 26)')]
+    #[TestDox('Remove Action: Disable sends active false, Delete sends DELETE; both answer 204')]
     public function removesUser(): void
     {
         $this->seed([self::storedUser('u1', 'bjensen', ['active' => true]), self::storedUser('u2', 'jsmith')]);

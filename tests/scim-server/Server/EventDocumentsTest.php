@@ -8,18 +8,34 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestDox;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Clock\MockClock;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use TacticMedia\ScimServer\Event\ResourceCreated;
 use TacticMedia\ScimServer\Event\ResourceDeleted;
+use TacticMedia\ScimServer\Event\ResourcePatched;
 use TacticMedia\ScimServer\Event\ResourceUpdated;
+use TacticMedia\ScimServer\Path\AttributePath;
+use TacticMedia\ScimServer\Repository\InMemoryResourceRepository;
+use TacticMedia\ScimServer\Schema\AttributeDefinition;
 use TacticMedia\ScimServer\Schema\CoreResourceTypes;
+use TacticMedia\ScimServer\Schema\CoreSchemas;
+use TacticMedia\ScimServer\Schema\Mutability;
+use TacticMedia\ScimServer\Schema\ResourceType;
+use TacticMedia\ScimServer\Schema\Schema;
+use TacticMedia\ScimServer\Schema\SchemaExtension;
+use TacticMedia\ScimServer\Server\RegisteredResourceType;
+use TacticMedia\ScimServer\Server\ScimServer;
+use TacticMedia\ScimServer\Tests\Server\Fixtures\MemberDeltaRepository;
 use TacticMedia\ScimServer\Tests\Server\Fixtures\ServerFixture;
 
 /**
- * Events carry no value that is never returned, such as the password.
+ * Events carry no value that is never returned, such as the password, in the documents and in the PATCH request.
  */
 final class EventDocumentsTest extends KernelTestCase
 {
     use ServerFixture;
+    private const string PATCH_OP = 'urn:ietf:params:scim:api:messages:2.0:PatchOp';
+    private const string VAULT = 'urn:example:scim:schemas:extension:2.0:Vault';
 
     #[Test]
     #[TestDox('ResourceCreated carries the created document without the password')]
@@ -42,7 +58,8 @@ final class EventDocumentsTest extends KernelTestCase
     public static function updates(): iterable
     {
         yield 'PUT' => ['PUT', ['userName' => 'babs', 'password' => 'n3w']];
-        yield 'PATCH' => ['PATCH', ['schemas' => ['urn:ietf:params:scim:api:messages:2.0:PatchOp'], 'Operations' => [['op' => 'replace', 'path' => 'password', 'value' => 'n3w']]]];
+        yield 'PATCH' => ['PATCH', ['schemas' => [self::PATCH_OP], 'Operations' => [['op' => 'replace', 'path' => 'password', 'value' => 'n3w']]]];
+        yield 'PATCH without path' => ['PATCH', ['schemas' => [self::PATCH_OP], 'Operations' => [['op' => 'replace', 'value' => ['password' => 'n3w']]]]];
     }
 
     /**
@@ -50,7 +67,7 @@ final class EventDocumentsTest extends KernelTestCase
      */
     #[Test]
     #[DataProvider('updates')]
-    #[TestDox('ResourceUpdated of $_dataName carries both documents without the password')]
+    #[TestDox('ResourceUpdated of $_dataName carries no password')]
     public function updatedWithoutPassword(string $method, array $body): void
     {
         $server = $this->server([self::storedUser('u1', 'bjensen', ['password' => 'old'])]);
@@ -61,6 +78,29 @@ final class EventDocumentsTest extends KernelTestCase
         self::assertInstanceOf(ResourceUpdated::class, $event);
         self::assertSame([$this->withoutPassword(self::storedUser('u1', 'bjensen', ['password' => 'old'])), $this->withoutPassword((array) $this->users->get('u1'))], [$event->before, $event->after]);
         self::assertSame('n3w', $this->users->get('u1')['password'] ?? null);
+        self::assertStringNotContainsString('n3w', var_export($event, true));
+    }
+
+    #[Test]
+    #[TestDox('ResourcePatched carries no value of a writeOnly attribute')]
+    public function patchedWithoutWriteOnlyValue(): void
+    {
+        $type = new ResourceType('Group', '/Groups', CoreSchemas::group(), [new SchemaExtension(new Schema(self::VAULT, 'Vault', 'Vault', [new AttributeDefinition('secret', mutability: Mutability::WriteOnly)]))]);
+        $groups = new InMemoryResourceRepository($type, new MockClock(), [self::storedGroup('g1', 'Admins')]);
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener(ResourcePatched::class, function (ResourcePatched $event): void {
+            $this->events[] = $event;
+        });
+        $server = new ScimServer([new RegisteredResourceType($type, new MemberDeltaRepository($groups, [new AttributePath(self::GROUP, 'members')]))], eventDispatcher: $dispatcher);
+
+        $this->send($server, 'PATCH', '/Groups/g1', ['schemas' => [self::PATCH_OP], 'Operations' => [
+            ['op' => 'add', 'path' => 'members', 'value' => [['value' => 'u1']]],
+            ['op' => 'add', 'path' => self::VAULT.':secret', 'value' => 'n3w'],
+        ]]);
+
+        self::assertCount(1, $this->events);
+        self::assertSame('n3w', ($groups->get('g1') ?? [])[self::VAULT]['secret'] ?? null);
+        self::assertStringNotContainsString('n3w', var_export($this->events, true));
     }
 
     #[Test]

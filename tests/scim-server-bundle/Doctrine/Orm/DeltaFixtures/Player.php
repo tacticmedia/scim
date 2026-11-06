@@ -24,7 +24,7 @@ class Player
     public string $userName;
 
     #[ORM\Column]
-    #[ScimSoftDelete(revive: false)]
+    #[ScimSoftDelete]
     public bool $deleted = false;
 
     public function __construct(string $userName)

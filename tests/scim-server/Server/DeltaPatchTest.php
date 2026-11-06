@@ -120,6 +120,32 @@ final class DeltaPatchTest extends KernelTestCase
         self::assertSame([], $this->events);
     }
 
+    #[Test]
+    #[TestDox('A ValuesChange without values dispatches nothing')]
+    public function ignoresEmptyChange(): void
+    {
+        $server = $this->deltaServer();
+        $this->deltas->reportsEveryStep = true;
+
+        $this->send($server, 'PATCH', '/Groups/g1', $this->patch(['op' => 'add', 'path' => 'members', 'value' => [['value' => 'u1']]]));
+
+        self::assertSame([], $this->events);
+    }
+
+    #[Test]
+    #[TestDox('ResourcePatched leaves out a ValuesChange without values')]
+    public function dispatchesOnlyEffectiveChanges(): void
+    {
+        $server = $this->deltaServer();
+        $this->deltas->reportsEveryStep = true;
+
+        $this->send($server, 'PATCH', '/Groups/g1', $this->patch(['op' => 'add', 'path' => 'members', 'value' => [['value' => 'u1']]], self::ENTRA_ADD));
+
+        $event = $this->events[0] ?? null;
+        self::assertInstanceOf(ResourcePatched::class, $event);
+        self::assertEquals([new ValuesChange(self::members(), [['value' => 'u2']], [])], $event->changes);
+    }
+
     /**
      * @return iterable<string, array{array<string, string>, string|null}>
      */

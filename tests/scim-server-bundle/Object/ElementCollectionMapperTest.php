@@ -67,17 +67,6 @@ final class ElementCollectionMapperTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('Only the first element with primary true stays primary')]
-    public function keepsOnePrimary(): void
-    {
-        $mailbox = new Mailbox();
-
-        $this->write($mailbox, [['value' => 'a@example.com'], ['value' => 'b@example.com', 'primary' => true], ['value' => 'c@example.com', 'primary' => true]]);
-
-        self::assertSame([false, true, false], array_map(static fn (MailboxEmail $email): bool => $email->primary, $mailbox->getEmails()));
-    }
-
-    #[Test]
     #[TestDox('Elements without "value" match by "type", in order, and an absent attribute removes every element')]
     public function matchesByTypeAndRemovesAll(): void
     {

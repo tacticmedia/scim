@@ -11,10 +11,12 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use TacticMedia\ScimServer\Schema\AttributeDefinition;
 use TacticMedia\ScimServer\Schema\CoreSchemas;
 use TacticMedia\ScimServer\Schema\Schema;
+use TacticMedia\ScimServer\Server\AuthenticationScheme;
 
 /**
  * RFC 7643 section 8.7.2 (Figure 10) with errata 5606, 5607, 6727, 7522, 8011, 8415, 8418, 8419, 8475 and 9018, and
- * ResourceType schemaExtensions optional as section 6 says, and ServiceProviderConfig pagination of RFC 9865 section 4.
+ * ResourceType schemaExtensions optional as section 6 says, authenticationSchemes.primary as section 8.5 shows, and
+ * ServiceProviderConfig pagination of RFC 9865 section 4.
  * Every attribute is readOnly and returned by default.
  */
 final class ServiceProviderSchemasTest extends KernelTestCase
@@ -66,6 +68,15 @@ final class ServiceProviderSchemasTest extends KernelTestCase
         self::assertSame($expected, array_map(static fn (string $set): array => self::paths(self::set($set)->attributes), array_combine(array_keys($expected), array_keys($expected))));
     }
 
+    #[Test]
+    #[TestDox('authenticationSchemes defines each member of an AuthenticationScheme')]
+    public function definesEachAuthenticationSchemeMember(): void
+    {
+        $scheme = new AuthenticationScheme('httpbasic', 'HTTP Basic', 'Basic', 'https://example.com/spec', 'https://example.com/docs', primary: true);
+
+        self::assertSame(array_keys($scheme->toArray()), self::paths(self::definition(CoreSchemas::serviceProviderConfig()->attributes, ['authenticationSchemes'])->subAttributes));
+    }
+
     /**
      * @return iterable<string, array{string, string, string, string}>
      */
@@ -114,6 +125,7 @@ final class ServiceProviderSchemasTest extends KernelTestCase
         yield "{$set}: authenticationSchemes.description" => [$set, 'authenticationSchemes.description', 'string', false, true, false, 'none', [], [], 'A description of the authentication scheme.'];
         yield "{$set}: authenticationSchemes.specUri" => [$set, 'authenticationSchemes.specUri', 'reference', false, false, false, 'none', [], ['external'], "An HTTP-addressable URL pointing to the authentication scheme's specification."];
         yield "{$set}: authenticationSchemes.documentationUri" => [$set, 'authenticationSchemes.documentationUri', 'reference', false, false, false, 'none', [], ['external'], "An HTTP-addressable URL pointing to the authentication scheme's usage documentation."];
+        yield "{$set}: authenticationSchemes.primary" => [$set, 'authenticationSchemes.primary', 'boolean', false, false, false, 'none', [], [], "A Boolean value indicating the 'primary' or preferred attribute value for this attribute. The primary attribute value 'true' MUST appear no more than once."];
         yield "{$set}: pagination" => [$set, 'pagination', 'complex', false, false, false, 'none', [], [], 'A complex type that indicates pagination configuration options.'];
         yield "{$set}: pagination.cursor" => [$set, 'pagination.cursor', 'boolean', false, true, false, 'none', [], [], 'A Boolean value specifying support of cursor-based pagination.'];
         yield "{$set}: pagination.index" => [$set, 'pagination.index', 'boolean', false, true, false, 'none', [], [], 'A Boolean value specifying support of index-based pagination.'];

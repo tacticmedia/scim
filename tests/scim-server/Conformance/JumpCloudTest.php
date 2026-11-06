@@ -10,8 +10,8 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use TacticMedia\ScimServer\Tests\Conformance\Fixtures\IdpClient;
 
 /**
- * JumpCloud, var/research/idp-okta-others.md section 3 and the JumpCloud quirks of section 7. The report names no
- * request headers and no update method; these are Bearer, application/scim+json and PUT.
+ * Request sequences of JumpCloud. No source names the request headers or the update method; these are Bearer,
+ * application/scim+json and PUT.
  */
 final class JumpCloudTest extends KernelTestCase
 {
@@ -29,7 +29,7 @@ final class JumpCloudTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('Activation tests: create, get, update and delete a user with a fresh email, then a group (quirks 19, 26, 46)')]
+    #[TestDox('Activation tests: create, get, update and delete a user with a fresh email, then a group')]
     public function runsActivationTests(): void
     {
         $this->seed();
@@ -50,7 +50,7 @@ final class JumpCloudTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('User matching: email, then username, each with exactly one result (quirk 47)')]
+    #[TestDox('User matching: email, then username, each with exactly one result')]
     public function matchesByEmailThenUserName(): void
     {
         $this->seed([self::storedUser('u1', 'bjensen', ['emails' => [['value' => 'bjensen@example.com', 'type' => 'work']]]), self::storedUser('u2', 'jsmith', ['emails' => [['value' => 'jsmith@example.com']]])]);
@@ -61,7 +61,7 @@ final class JumpCloudTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('Group takeover: the displayName lookup finds the existing group; deleting it leaves the members (quirks 10, 27)')]
+    #[TestDox('Group takeover: the displayName lookup finds the existing group; deleting it leaves the members')]
     public function takesOverGroup(): void
     {
         $user = self::storedUser('u1', 'bjensen', ['active' => true]);

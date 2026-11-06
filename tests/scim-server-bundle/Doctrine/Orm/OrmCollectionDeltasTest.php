@@ -124,6 +124,21 @@ final class OrmCollectionDeltasTest extends KernelTestCase
     }
 
     #[Test]
+    #[TestDox('An id that the int id column cannot hold is no element, and needs no statement')]
+    public function skipsIdsOutsideTheColumn(): void
+    {
+        $squad = $this->squad('Red');
+        $players = $this->at($this->squads(), 'players');
+        $queries = self::getContainer()->get('doctrine.debug_data_holder');
+        $queries->reset();
+
+        self::assertSame([], $this->store->elementIds($this->squads(), $squad, $players, ['p2147483648']));
+        self::assertSame(['p2147483648'], $this->store->addElements($this->squads(), $squad, $players, ['p2147483648']));
+        $this->store->removeElements($this->squads(), $squad, $players, ['p2147483648']);
+        self::assertSame([], $queries->getData()['default'] ?? []);
+    }
+
+    #[Test]
     #[TestDox('The statements bind at most 1000 parameters')]
     public function chunksLargeIdLists(): void
     {

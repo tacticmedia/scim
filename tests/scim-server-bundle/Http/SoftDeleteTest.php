@@ -13,8 +13,8 @@ use TacticMedia\ScimServerBundle\Tests\Fixtures\Entity\Group;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Entity\User;
 
 /**
- * The fixture User has #[ScimSoftDelete] on $deletedAt. The Group repository of the test kernel takes the full
- * PATCH path.
+ * The fixture User has #[ScimSoftDelete(revive: true)] on $deletedAt. The Group repository of the test kernel takes
+ * the full PATCH path.
  */
 final class SoftDeleteTest extends WebTestCase
 {
@@ -71,19 +71,64 @@ final class SoftDeleteTest extends WebTestCase
     }
 
     #[Test]
-    #[TestDox('A POST with the userName of a soft-deleted user revives it: 201, the same id, the new document, its links')]
+    #[TestDox('revive: true: a POST with the userName of a soft-deleted user gets 201, its id and only the new values')]
     public function createRevives(): void
     {
-        $bjensen = $this->user('bjensen', ['displayName' => 'Old', 'title' => 'Tour Guide']);
-        $group = $this->group([$bjensen]);
+        $carol = $this->user('carol');
+        $bjensen = $this->user('bjensen', ['displayName' => 'Old', 'title' => 'Tour Guide', Scim::ENTERPRISE => ['manager' => ['value' => $carol]]]);
+        self::assertNoContent($this->send('DELETE', '/scim/v2/Users/'.$carol));
         self::assertNoContent($this->send('DELETE', '/scim/v2/Users/'.$bjensen));
 
         $revived = $this->send('POST', '/scim/v2/Users', ['schemas' => [Scim::USER], 'userName' => 'BJensen', 'displayName' => 'New']);
 
         self::assertSame(201, $revived->getStatusCode(), (string) $revived->getContent());
         self::assertSame([$bjensen, 'BJensen', 'New', null], [self::idOf($revived), self::json($revived)['userName'] ?? null, self::json($revived)['displayName'] ?? null, self::json($revived)['title'] ?? null]);
-        self::assertNull($this->stored(User::class, $bjensen)->deletedAt);
-        self::assertSame([$bjensen], $this->members($group));
+        $stored = $this->stored(User::class, $bjensen);
+        self::assertSame([null, null], [$stored->deletedAt, $stored->getManager()]);
+    }
+
+    #[Test]
+    #[TestDox('A revive without password clears the stored password')]
+    public function reviveClearsPassword(): void
+    {
+        $bjensen = $this->user('bjensen', ['password' => 'OldPersonSecret1!']);
+        self::assertNoContent($this->send('DELETE', '/scim/v2/Users/'.$bjensen));
+
+        self::assertSame(201, $this->send('POST', '/scim/v2/Users', ['schemas' => [Scim::USER], 'userName' => 'bjensen'])->getStatusCode());
+
+        self::assertNull($this->stored(User::class, $bjensen)->getPassword());
+    }
+
+    #[Test]
+    #[TestDox('A revive removes the user from its groups and changes their meta.version')]
+    public function reviveLeavesGroups(): void
+    {
+        $bjensen = $this->user('bjensen');
+        $jsmith = $this->user('jsmith');
+        $group = $this->group([$bjensen, $jsmith]);
+        $etag = $this->send('GET', '/scim/v2/Groups/'.$group)->headers->get('ETag');
+        self::assertNoContent($this->send('DELETE', '/scim/v2/Users/'.$bjensen));
+
+        $revived = $this->send('POST', '/scim/v2/Users', ['schemas' => [Scim::USER], 'userName' => 'bjensen']);
+
+        self::assertArrayNotHasKey('groups', self::json($revived));
+        self::assertSame([$jsmith], $this->members($group));
+        self::assertNotSame($etag, $this->send('GET', '/scim/v2/Groups/'.$group)->headers->get('ETag'));
+        self::assertSame(['jsmith'], $this->stored(Group::class, $group)->getUsers()->map(static fn (User $user): string => $user->getUserName())->getValues());
+    }
+
+    #[Test]
+    #[TestDox('A revive clears the manager of the users that it managed')]
+    public function reviveClearsManagerReferences(): void
+    {
+        $bjensen = $this->user('bjensen');
+        $jsmith = $this->user('jsmith', [Scim::ENTERPRISE => ['manager' => ['value' => $bjensen]]]);
+        self::assertNoContent($this->send('DELETE', '/scim/v2/Users/'.$bjensen));
+
+        self::assertSame(201, $this->send('POST', '/scim/v2/Users', ['schemas' => [Scim::USER], 'userName' => 'bjensen'])->getStatusCode());
+
+        self::assertArrayNotHasKey(Scim::ENTERPRISE, self::json($this->send('GET', '/scim/v2/Users/'.$jsmith)));
+        self::assertNull($this->stored(User::class, $jsmith)->getManager());
     }
 
     /**

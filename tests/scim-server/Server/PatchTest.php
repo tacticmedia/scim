@@ -60,7 +60,7 @@ final class PatchTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('PATCH that changes nothing writes nothing and keeps the ETag (Okta quirk 17, RFC 7644 3.5.2.1)')]
+    #[TestDox('PATCH that changes nothing writes nothing and keeps the ETag (RFC 7644 3.5.2.1)')]
     public function keepsUnchangedResource(): void
     {
         $stored = self::storedGroup('g1', 'Tour Guides');

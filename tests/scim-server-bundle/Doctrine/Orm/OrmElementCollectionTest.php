@@ -70,7 +70,7 @@ final class OrmElementCollectionTest extends KernelTestCase
             ["CASE WHEN (s0.locality IS NOT NULL AND s0.locality <> '') THEN LOWER(s0.locality) ELSE '' END", 'DESC'],
             ['r.id', 'ASC'],
         ], $items);
-        self::assertSame([['r.addresses', 's0', 'NOT EXISTS (SELECT 1 FROM '.self::USER.' o0 JOIN o0.addresses t0 WHERE o0 = r AND (CASE WHEN t0.primary = true THEN 0 ELSE 1 END < CASE WHEN s0.primary = true THEN 0 ELSE 1 END OR (CASE WHEN t0.primary = true THEN 0 ELSE 1 END = CASE WHEN s0.primary = true THEN 0 ELSE 1 END AND t0.id < s0.id)))']], $context->joins());
+        self::assertSame([[UserAddress::class, 's0', 's0.id = (SELECT t0.id FROM '.self::USER.' o0 JOIN o0.addresses t0 WHERE o0 = r AND NOT EXISTS (SELECT 1 FROM '.self::USER.' o1 JOIN o1.addresses t1 WHERE o1 = r AND (CASE WHEN t1.primary = true THEN 0 ELSE 1 END < CASE WHEN t0.primary = true THEN 0 ELSE 1 END OR (CASE WHEN t1.primary = true THEN 0 ELSE 1 END = CASE WHEN t0.primary = true THEN 0 ELSE 1 END AND t1.id < t0.id))))']], $context->joins());
     }
 
     #[Test]

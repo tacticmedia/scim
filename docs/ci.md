@@ -7,7 +7,7 @@
 | `qa` | `ubuntu-latest` with setup-php | actionlint over `.github/workflows/`, `composer audit`, then the composer scripts `lint`, `dependencies`, `rector:check`, `cs:check` and `stan`. |
 | `tests` | `ubuntu-latest` with setup-php and Xdebug | `composer install`, then `composer coverage`: PHPUnit with a Clover report, then `bin/coverage`, which fails below 95 percent line coverage. The tests use in-memory SQLite. |
 | `databases` | `ubuntu-latest` with setup-php, and one database service per matrix entry: PostgreSQL 18.6, MySQL 9.7.4 (LTS), MySQL 26.10.0 (Innovation), MariaDB 12.3.3 (LTS), MariaDB 13.0.2 | `composer install`, then `composer test` with `DATABASE_URL` set to the service. The data directory of the service is on tmpfs. No coverage. |
-| `lowest` | `ubuntu-latest` with setup-php | `composer update --prefer-lowest --prefer-stable`, then `composer test`. |
+| `lowest` | `ubuntu-latest` with setup-php | Sets each root `require-dev` constraint of a package that `scim-server/composer.json` or `scim-server-bundle/composer.json` requires or conflicts with to `*`, then `composer update --prefer-lowest --prefer-stable`, then `composer test`. The packages and the dev tools thus set the floors, not the root constraints that `bump-after-update` raises. |
 
 All jobs install the PHP extensions of the `ext-*` entries in `composer.json`. The `databases` job also installs
 the PDO driver of its database from the matrix. `composer.json` does not list `ext-pdo_pgsql` and `ext-pdo_mysql`,
@@ -70,8 +70,8 @@ docker run --detach --rm --name scim-mysql --publish 127.0.0.1:3306:3306 --tmpfs
 DATABASE_URL='mysql://root:scim@127.0.0.1:3306/scim?serverVersion=9.7.4&charset=utf8mb4' composer test
 ```
 
-For MariaDB, use `MARIADB_ROOT_PASSWORD`, `MARIADB_DATABASE` and a `serverVersion` that ends in `-MariaDB`, for
-example `12.3.3-MariaDB`. The `databases` job in `.github/workflows/ci.yaml` has the URL of each entry. A server of
+For MariaDB, use the same `MYSQL_*` variables and a `serverVersion` that ends in `-MariaDB`, for example
+`12.3.3-MariaDB`. The `databases` job in `.github/workflows/ci.yaml` has the URL of each entry. A server of
 your own needs the settings of [Database notes](../scim-server-bundle/docs/index.md#database-notes): the builtin
 `C.UTF-8` locale on PostgreSQL, and a MySQL or MariaDB server that has `utf8mb4_0900_bin`.
 

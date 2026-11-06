@@ -63,6 +63,21 @@ final class BulkCycleTest extends KernelTestCase
     }
 
     #[Test]
+    #[TestDox('A cycle entered at a later POST cuts its first POST in request order')]
+    public function cutsFirstPostOfCycleInRequestOrder(): void
+    {
+        $server = $this->server();
+
+        $this->bulk($server, [
+            $this->group('x', 'X', ['bulkId:c']),
+            $this->group('b', 'B', ['bulkId:c']),
+            $this->group('c', 'C', ['bulkId:b']),
+        ]);
+
+        self::assertSame(['Created B', 'Created C', 'Updated B', 'Created X'], $this->eventLog());
+    }
+
+    #[Test]
     #[TestDox('A self-reference in a group member and in the enterprise manager resolves to the own id')]
     public function resolvesSelfReferences(): void
     {

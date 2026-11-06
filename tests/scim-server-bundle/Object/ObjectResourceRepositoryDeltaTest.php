@@ -72,7 +72,7 @@ final class ObjectResourceRepositoryDeltaTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('deltaAttributes() lists Group members; User groups is readOnly, and a store without the capability has none')]
+    #[TestDox('deltaAttributes() lists Group members; User groups, an inverse side, and a store without the capability have none')]
     public function listsDeltaAttributes(): void
     {
         $users = self::getContainer()->get('test.tacticmedia_scim_server.repository.user');

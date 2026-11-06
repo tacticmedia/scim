@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace TacticMedia\ScimServerBundle\Tests\Object;
 
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
+use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
+use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestDox;
@@ -11,12 +14,16 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\KernelInterface;
 use TacticMedia\ScimServer\Server\ScimServer;
+use TacticMedia\ScimServerBundle\Tests\Doctrine\Orm\DeltaFixtures\Fan;
+use TacticMedia\ScimServerBundle\Tests\Doctrine\Orm\DeltaFixtures\Gang;
 use TacticMedia\ScimServerBundle\Tests\Doctrine\Orm\DeltaFixtures\Player;
+use TacticMedia\ScimServerBundle\Tests\Doctrine\Orm\DeltaFixtures\Rookie;
 use TacticMedia\ScimServerBundle\Tests\Doctrine\Orm\DeltaFixtures\Squad;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\CreatesSchema;
 
 /**
- * Player has #[ScimSoftDelete(revive: false)] on a bool and a unique userName column. Squad takes the delta path.
+ * Player has #[ScimSoftDelete] with the default revive: false on a bool and a unique userName column. Squad takes the
+ * delta path. Fan has revive: true, and Gang takes the full PATCH path.
  */
 final class SoftDeleteRepositoryTest extends KernelTestCase
 {
@@ -37,7 +44,7 @@ final class SoftDeleteRepositoryTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('With revive: false, DELETE sets the flag and a new user with the same userName meets the unique index: 409')]
+    #[TestDox('By default, DELETE sets the flag and a new user with the same userName meets the unique index: 409')]
     public function withoutReviveCreatesAnew(): void
     {
         $id = $this->json(self::request($this->server, 'POST', '/Users', ['userName' => 'alice']))['id'] ?? null;
@@ -48,6 +55,49 @@ final class SoftDeleteRepositoryTest extends KernelTestCase
 
         self::assertSame([409, 'uniqueness'], [$again->getStatusCode(), $this->json($again)['scimType'] ?? null]);
         self::assertSame([true], array_map(static fn (Player $player): bool => $player->deleted, $this->entityManager->getRepository(Player::class)->findAll()));
+    }
+
+    #[Test]
+    #[TestDox('A partial unique index on the live rows lets a new user take the userName of a soft-deleted one')]
+    public function partialIndexStoresNewUser(): void
+    {
+        $this->liveUserNameIndex();
+        $server = self::ormServer(self::mappings(['User' => Rookie::class]));
+        $old = $this->json(self::request($server, 'POST', '/Users', ['userName' => 'alice']))['id'] ?? null;
+        self::assertIsString($old);
+        self::assertSame(204, self::request($server, 'DELETE', '/Users/'.$old)->getStatusCode());
+
+        $new = self::request($server, 'POST', '/Users', ['userName' => 'alice']);
+
+        self::assertSame(201, $new->getStatusCode(), (string) $new->getContent());
+        self::assertNotSame($old, $this->json($new)['id'] ?? null);
+        $this->entityManager->persist(new Rookie('alice'));
+        $this->expectException(UniqueConstraintViolationException::class);
+        $this->entityManager->flush();
+    }
+
+    #[Test]
+    #[TestDox('revive: true removes the user from groups without member deltas and empties its readOnly groups')]
+    public function reviveUnlinksWithoutDeltas(): void
+    {
+        [$alice, $bob] = [new Fan('alice'), new Fan('bob')];
+        [$red, $blue] = [new Gang('Red'), new Gang('Blue')];
+        $red->addFan($alice);
+        $red->addFan($bob);
+
+        $alice->addGang($blue);
+        array_map($this->entityManager->persist(...), [$alice, $bob, $red, $blue]);
+        $alice->deleted = true;
+        $this->entityManager->flush();
+
+        $revived = self::request(self::ormServer(self::mappings(['User' => Fan::class, 'Group' => Gang::class])), 'POST', '/Users', ['userName' => 'alice']);
+
+        self::assertSame([201, 'f'.$alice->id, false], [$revived->getStatusCode(), $this->json($revived)['id'] ?? null, \array_key_exists('groups', $this->json($revived))]);
+        $this->entityManager->clear();
+        $stored = $this->entityManager->find(Gang::class, $red->id);
+        self::assertInstanceOf(Gang::class, $stored);
+        self::assertSame([['bob'], 2], [$stored->getFans()->map(static fn (Fan $fan): string => $fan->userName)->getValues(), $stored->version]);
+        self::assertCount(0, $this->entityManager->find(Fan::class, $alice->id)?->getGangs() ?? []);
     }
 
     #[Test]
@@ -81,6 +131,23 @@ final class SoftDeleteRepositoryTest extends KernelTestCase
     private function patch(string $op, array $members): array
     {
         return ['schemas' => [self::PATCH_OP], 'Operations' => [['op' => $op, 'path' => 'members', 'value' => $members]]];
+    }
+
+    /**
+     * The index of the guide for each platform. DBAL creates it from the mapping only on PostgreSQL.
+     */
+    private function liveUserNameIndex(): void
+    {
+        $connection = $this->entityManager->getConnection();
+        $statements = match (true) {
+            $connection->getDatabasePlatform() instanceof SQLitePlatform => ['DROP INDEX delta_rookie_live_user_name', 'CREATE UNIQUE INDEX delta_rookie_live_user_name ON delta_rookie (user_name) WHERE deleted_at IS NULL'],
+            $connection->getDatabasePlatform() instanceof AbstractMySQLPlatform => ['ALTER TABLE delta_rookie DROP INDEX delta_rookie_live_user_name, ADD live_user_name VARCHAR(100) GENERATED ALWAYS AS (IF(deleted_at IS NULL, user_name, NULL)) VIRTUAL, ADD UNIQUE INDEX delta_rookie_live_user_name (live_user_name)'],
+            default => [],
+        };
+
+        foreach ($statements as $statement) {
+            $connection->executeStatement($statement);
+        }
     }
 
     /**

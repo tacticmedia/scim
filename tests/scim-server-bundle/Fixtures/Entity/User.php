@@ -119,7 +119,7 @@ class User implements PasswordAuthenticatedUserInterface
     private int $version = 1;
 
     #[ORM\Column(nullable: true)]
-    #[ScimSoftDelete]
+    #[ScimSoftDelete(revive: true)]
     public private(set) ?\DateTimeImmutable $deletedAt = null;
 
     public function __construct(string $userName)

@@ -110,7 +110,7 @@ php demo/identity-provider/bin/console idp:import --count=2
 
 | Dialect | Requests |
 | --- | --- |
-| `keycloak` | `GET /Users?cursor&count=<count>`, then `GET /Users?cursor=<nextCursor>&count=<count>` until a page has no `nextCursor` (RFC 9865). When the first page has no `nextCursor` and `totalResults` is larger than the page, the IdP continues with `startIndex`, as the plugin does. |
+| `keycloak` | `GET /Users?cursor&count=<count>`, then `GET /Users?cursor=<nextCursor>&count=<count>` until a page has no `nextCursor` (RFC 9865). A `nextCursor` that the IdP already sent stops the import with an error. When the first page has no `nextCursor` and `totalResults` is larger than the page, the IdP continues with `startIndex`, as the plugin does. |
 | Others | `GET /Users?startIndex=1&count=<count>`, then the next `startIndex` until `totalResults` |
 
 The default page size is 100, as Keycloak and Okta use. The 6 users of `idp:seed` fit on one page. Set the page size

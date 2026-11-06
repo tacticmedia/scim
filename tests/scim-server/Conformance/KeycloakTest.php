@@ -10,8 +10,8 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use TacticMedia\ScimServer\Tests\Conformance\Fixtures\IdpClient;
 
 /**
- * The Keycloak plugin shebang-labs/scim-outbound-for-keycloak, var/research/idp-okta-others.md section 6 and the
- * Keycloak quirks of section 7. The report names no request headers; these are the plugin's Bearer mode.
+ * Request sequences of the Keycloak plugin shebang-labs/scim-outbound-for-keycloak. No source names the request
+ * headers; these are the plugin's Bearer mode.
  */
 final class KeycloakTest extends KernelTestCase
 {
@@ -22,7 +22,7 @@ final class KeycloakTest extends KernelTestCase
     private const string KEYCLOAK_ID = '6f1f5c8e-0e43-4d4b-9a4b-2f9c1d7e8a10';
 
     #[Test]
-    #[TestDox('Probe: /ServiceProviderConfig advertises PATCH, filter, maxResults and the authentication schemes (quirk 33)')]
+    #[TestDox('Probe: /ServiceProviderConfig advertises PATCH, filter, maxResults and the authentication schemes')]
     public function advertisesPatch(): void
     {
         $this->seed();
@@ -33,7 +33,7 @@ final class KeycloakTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('Lookup before create: escaped and %20-encoded userName and displayName filters find the resources (quirks 7, 10)')]
+    #[TestDox('Lookup before create: escaped and %20-encoded userName and displayName filters find the resources')]
     public function looksUpByEscapedValues(): void
     {
         $this->seed([self::storedUser('u1', 'o"brien\\x', ['externalId' => self::KEYCLOAK_ID])], [self::storedGroup('g1', 'R&D "core"')]);
@@ -45,7 +45,7 @@ final class KeycloakTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('Create: a duplicate userName answers 409 uniqueness, which the plugin turns into a lookup (quirk 20)')]
+    #[TestDox('Create: a duplicate userName answers 409 uniqueness, which the plugin turns into a lookup')]
     public function rejectsDuplicateCreate(): void
     {
         $this->seed([self::storedUser('u1', 'bjensen', ['externalId' => self::KEYCLOAK_ID])]);
@@ -57,7 +57,7 @@ final class KeycloakTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('User update: path-ful replace of name merges (RFC 7644 3.5.2.3), of emails replaces all, of the extension URN sets its attributes (quirks 40, 41)')]
+    #[TestDox('User update: path-ful replace of name merges (RFC 7644 3.5.2.3), of emails replaces all, of the extension URN sets its attributes')]
     public function updatesUser(): void
     {
         $this->seed([self::storedUser('u1', 'bjensen', [
@@ -86,7 +86,7 @@ final class KeycloakTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('Without PATCH: PUT with the full user and id answers 200 and replaces the user (quirks 3, 4)')]
+    #[TestDox('Without PATCH: PUT with the full user and id answers 200 and replaces the user')]
     public function replacesUser(): void
     {
         $this->seed([self::storedUser('u1', 'bjensen', ['title' => 'Tour Guide'])]);
@@ -98,7 +98,7 @@ final class KeycloakTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('Deactivation: PATCH replace of active with false answers 204; DELETE answers 204, a second DELETE 404 (quirk 26)')]
+    #[TestDox('Deactivation: PATCH replace of active with false answers 204; DELETE answers 204, a second DELETE 404')]
     public function deprovisionsUser(): void
     {
         $this->seed([self::storedUser('u1', 'bjensen', ['active' => true])]);
@@ -111,7 +111,7 @@ final class KeycloakTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('Membership: add in a chunk of 100, remove with a value array, fallback remove by value filter, rename (quirks 12, 13, 16)')]
+    #[TestDox('Membership: add in a chunk of 100, remove with a value array, fallback remove by value filter, rename')]
     public function changesMembership(): void
     {
         $ids = array_map(static fn (int $i): string => 'u'.$i, range(1, 100));
@@ -128,7 +128,7 @@ final class KeycloakTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('Member discovery: the groups.value filter on /Users answers 200 with the users whose stored groups match (quirk 38)')]
+    #[TestDox('Member discovery: the groups.value filter on /Users answers 200 with the users whose stored groups match')]
     public function filtersByGroups(): void
     {
         $this->seed([self::storedUser('u1', 'bjensen', ['groups' => [['value' => 'g1']]]), self::storedUser('u2', 'jsmith')]);
@@ -137,7 +137,7 @@ final class KeycloakTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('Pagination: startIndex and count page; the RFC 9865 cursor parameter is ignored (quirks 9, 39)')]
+    #[TestDox('Pagination: startIndex and count page; the RFC 9865 cursor parameter is ignored')]
     public function paginates(): void
     {
         $this->seed(array_map(static fn (int $i): array => self::storedUser('u'.$i, 'user'.$i), range(1, 5)));

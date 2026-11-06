@@ -150,6 +150,27 @@ final class OrmObjectStoreTest extends KernelTestCase
     }
 
     #[Test]
+    #[TestDox('A failing write keeps a configured SQL filter disabled that was disabled at runtime')]
+    public function failingWriteKeepsRuntimeDisabledFilters(): void
+    {
+        self::bootKernel(['environment' => 'filters']);
+        $directory = Directory::seed(self::createSchema());
+        self::getContainer()->get('doctrine.orm.entity_manager')->getFilters()->disable('hidden_user');
+        $store = self::store();
+        $users = self::mappings()->get('User');
+        $failure = new \RuntimeException('failed');
+
+        try {
+            $store->transactional($users, static fn (): never => throw $failure);
+        } catch (\RuntimeException $runtimeException) {
+            self::assertSame($failure, $runtimeException);
+        }
+
+        self::assertSame([], self::getContainer()->get('doctrine.orm.entity_manager')->getFilters()->getEnabledFilters());
+        self::assertNotNull($store->find($users, (string) $directory->id('bjensen')));
+    }
+
+    #[Test]
     #[TestDox('A unique violation is 409 uniqueness, and the manager is open afterwards')]
     public function uniqueViolationIsUniqueness(): void
     {

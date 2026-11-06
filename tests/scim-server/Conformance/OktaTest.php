@@ -11,8 +11,8 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use TacticMedia\ScimServer\Tests\Conformance\Fixtures\IdpClient;
 
 /**
- * Okta, var/research/idp-okta-others.md section 1 and the quirks of section 7. The production requests carry the
- * documented headers only; Okta documents no Content-Type for them. The SPEC test requests carry its headers.
+ * Request sequences of Okta. The production requests carry the documented headers only; Okta documents no
+ * Content-Type for them. The SPEC test requests carry its headers.
  */
 final class OktaTest extends KernelTestCase
 {
@@ -27,7 +27,7 @@ final class OktaTest extends KernelTestCase
     private const string GROUP_ID = 'abf4dd94-a4c0-4f67-89c9-76b03340cb9b';
 
     #[Test]
-    #[TestDox('1.4.1 Provisioning enabled: GET /Users?startIndex=1&count=2 and GET /Groups?startIndex=1&count=100 answer ListResponses with integers (quirk 8)')]
+    #[TestDox('Provisioning enabled: GET /Users?startIndex=1&count=2 and GET /Groups?startIndex=1&count=100 answer ListResponses with integers')]
     public function answersFirstRequests(): void
     {
         $this->seed([self::oktaUser(self::USER_ID, 'test.user@okta.local'), self::oktaUser(self::OTHER_ID, 'babs@okta.local'), self::oktaUser('u3', 'jsmith@okta.local')], [self::storedGroup(self::GROUP_ID, 'Test SCIMv2')]);
@@ -40,7 +40,7 @@ final class OktaTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('1.4.2 User assignment: the userName filter that matches nothing answers the preferred empty ListResponse (quirks 7, 8)')]
+    #[TestDox('User assignment: the userName filter that matches nothing answers the preferred empty ListResponse')]
     public function answersEmptyUserNameFilter(): void
     {
         $this->seed([self::oktaUser(self::OTHER_ID, 'babs@okta.local')]);
@@ -49,7 +49,7 @@ final class OktaTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('1.4.2 The userName filter matches in any case (SPEC test Username Case Sensitivity Check, quirk 7)')]
+    #[TestDox('The userName filter matches in any case (SPEC test Username Case Sensitivity Check)')]
     public function matchesUserNameInAnyCase(): void
     {
         $this->seed([self::oktaUser(self::USER_ID, 'test.user@okta.local')]);
@@ -59,7 +59,7 @@ final class OktaTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('1.4.3 Import users: pages of 100 with startIndex+100, a stable order, inactive users and full representations (quirks 8, 9, 49)')]
+    #[TestDox('Import users: pages of 100 with startIndex+100, a stable order, inactive users and full representations')]
     public function importsUsers(): void
     {
         $this->seed(array_map(static fn (int $i): array => self::oktaUser('u'.$i, 'user'.$i.'@okta.local', ['active' => 150 !== $i]), range(1, 150)));
@@ -76,7 +76,7 @@ final class OktaTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('1.4.3 SPEC test GET /Users?count=1&startIndex=1 returns one full user')]
+    #[TestDox('SPEC test GET /Users?count=1&startIndex=1 returns one full user')]
     public function answersSpecTestPage(): void
     {
         $this->seed([self::oktaUser(self::USER_ID, 'test.user@okta.local'), self::oktaUser(self::OTHER_ID, 'babs@okta.local')]);
@@ -89,7 +89,7 @@ final class OktaTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('1.4.4 Create user: POST with groups [] and password answers 201 with the user and Location, without password (quirks 4, 5, 6, 19)')]
+    #[TestDox('Create user: POST with groups [] and password answers 201 with the user and Location, without password')]
     public function createsUser(): void
     {
         $this->seed();
@@ -127,7 +127,7 @@ final class OktaTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('1.4.4 SPEC test create with application/json answers 201; the same POST again answers 409 uniqueness (quirks 20, 34)')]
+    #[TestDox('SPEC test create with application/json answers 201; the same POST again answers 409 uniqueness')]
     public function createsSpecTestUser(): void
     {
         $this->seed();
@@ -154,7 +154,7 @@ final class OktaTest extends KernelTestCase
 
     #[Test]
     #[DataProvider('unknownIds')]
-    #[TestDox('1.4.5 SPEC test GET of the unknown id $_dataName answers 404 with an Error body (quirk 21)')]
+    #[TestDox('SPEC test GET of the unknown id $_dataName answers 404 with an Error body')]
     public function answersUnknownId(string $id): void
     {
         $this->seed([self::oktaUser(self::USER_ID, 'test.user@okta.local')]);
@@ -163,7 +163,7 @@ final class OktaTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('1.4.6 Profile update: PUT of the GET output with id, meta, groups and "" answers 200 and keeps the password (quirks 3, 4, 42)')]
+    #[TestDox('Profile update: PUT of the GET output with id, meta, groups and "" answers 200 and keeps the password')]
     public function replacesUserFromGetOutput(): void
     {
         $this->seed([self::oktaUser(self::USER_ID, 'test.user@okta.local', ['nickName' => 'Testy', 'password' => '1mz050nq'])]);
@@ -183,7 +183,7 @@ final class OktaTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('1.4.6 The GET output keeps empty strings, and a PUT that sends them back answers 200 (quirk 42)')]
+    #[TestDox('The GET output keeps empty strings, and a PUT that sends them back answers 200')]
     public function keepsEmptyStrings(): void
     {
         $this->seed([self::oktaUser(self::USER_ID, 'test.user@okta.local', ['name' => ['givenName' => 'Test', 'middleName' => '', 'familyName' => 'User'], 'title' => ''])]);
@@ -197,7 +197,7 @@ final class OktaTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('1.4.6 A PUT that takes the userName of another user answers 409 uniqueness')]
+    #[TestDox('A PUT that takes the userName of another user answers 409 uniqueness')]
     public function rejectsUserNameCollision(): void
     {
         $this->seed([self::oktaUser(self::USER_ID, 'test.user@okta.local'), self::oktaUser(self::OTHER_ID, 'babs@okta.local')]);
@@ -218,7 +218,7 @@ final class OktaTest extends KernelTestCase
 
     #[Test]
     #[DataProvider('activations')]
-    #[TestDox('$_dataName: path-less PATCH replace of active answers 204, then GET returns the same id (quirks 1, 25)')]
+    #[TestDox('$_dataName: path-less PATCH replace of active answers 204, then GET returns the same id')]
     public function patchesActive(string $uri, bool $active): void
     {
         $this->seed([self::oktaUser(self::USER_ID, 'test.user@okta.local', ['active' => !$active])]);
@@ -258,7 +258,7 @@ final class OktaTest extends KernelTestCase
      */
     #[Test]
     #[DataProvider('passwordSyncs')]
-    #[TestDox('1.4.9 Password sync $_dataName answers 204; GET never returns the password (quirk 6)')]
+    #[TestDox('Password sync $_dataName answers 204; GET never returns the password')]
     public function syncsPassword(array $operation): void
     {
         $this->seed([self::oktaUser(self::USER_ID, 'test.user@okta.local', ['password' => '1mz050nq'])]);
@@ -270,7 +270,7 @@ final class OktaTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('1.4.10 Group Push: POST with members [] answers 201 with the group')]
+    #[TestDox('Group Push: POST with members [] answers 201 with the group')]
     public function pushesGroup(): void
     {
         $this->seed();
@@ -288,7 +288,7 @@ final class OktaTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('1.4.11 Import groups, lookup by displayName and SPEC test GET /Groups without parameters return members (quirks 10, 11, 15)')]
+    #[TestDox('Import groups, lookup by displayName and SPEC test GET /Groups without parameters return members')]
     public function importsGroups(): void
     {
         $this->seed(groups: [self::storedGroup(self::GROUP_ID, 'Test SCIMv2', ['members' => [['value' => self::USER_ID]]]), self::storedGroup('g2', 'Tour Guides')]);
@@ -303,7 +303,7 @@ final class OktaTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('1.4.12 GET /Groups/{id} without parameters returns the members (quirk 11)')]
+    #[TestDox('GET /Groups/{id} without parameters returns the members')]
     public function retrievesGroupWithMembers(): void
     {
         $this->seed(groups: [self::storedGroup(self::GROUP_ID, 'Test SCIMv2', ['members' => [['value' => 'b1c794f24f4c49f4b5d503a4cb2686ea']]])]);
@@ -312,7 +312,7 @@ final class OktaTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('1.4.13 Rename: path-less replace with the readOnly id answers 204; the same rename again writes nothing (quirks 2, 17)')]
+    #[TestDox('Rename: path-less replace with the readOnly id answers 204; the same rename again writes nothing')]
     public function renamesGroup(): void
     {
         $this->seed(groups: [self::storedGroup(self::GROUP_ID, 'Test SCIMv1', ['members' => [['value' => self::USER_ID]]])]);
@@ -330,7 +330,7 @@ final class OktaTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('1.4.13 Rename with another id in the value answers 400 mutability: id is readOnly (RFC 7643 section 7)')]
+    #[TestDox('Rename with another id in the value answers 400 mutability: id is readOnly (RFC 7643 section 7)')]
     public function rejectsOtherIdInRename(): void
     {
         $this->seed(groups: [self::storedGroup(self::GROUP_ID, 'Test SCIMv1')]);
@@ -341,7 +341,7 @@ final class OktaTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('1.4.13 AIW rename: PUT with another id in the body answers 200; the URL id wins and members.display is dropped (quirk 3)')]
+    #[TestDox('AIW rename: PUT with another id in the body answers 200; the URL id wins and members.display is dropped')]
     public function replacesGroup(): void
     {
         $this->seed(groups: [self::storedGroup('U0FP0NMEE', 'Tour Operators')]);
@@ -360,7 +360,7 @@ final class OktaTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('1.4.14 Membership: remove by value filter and add with display in one request answer 204 (quirks 9, 12, 15, 16)')]
+    #[TestDox('Membership: remove by value filter and add with display in one request answer 204')]
     public function changesMembership(): void
     {
         $this->seed(groups: [self::storedGroup(self::GROUP_ID, 'Test SCIMv2', ['members' => [['value' => self::OTHER_ID], ['value' => 'u3']]])]);
@@ -376,7 +376,7 @@ final class OktaTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('1.4.14 Membership: a request whose second operation fails changes nothing (atomic, quirk 15)')]
+    #[TestDox('Membership: a request whose second operation fails changes nothing (atomic)')]
     public function changesMembershipAtomically(): void
     {
         $stored = self::storedGroup(self::GROUP_ID, 'Test SCIMv2', ['members' => [['value' => self::OTHER_ID]]]);
@@ -409,7 +409,7 @@ final class OktaTest extends KernelTestCase
      */
     #[Test]
     #[DataProvider('membershipPushes')]
-    #[TestDox('1.4.14 Full membership push: PATCH replace of members with $_dataName replaces all members (quirk 14)')]
+    #[TestDox('Full membership push: PATCH replace of members with $_dataName replaces all members')]
     public function pushesMembership(array $members, ?array $expected): void
     {
         $this->seed(groups: [self::storedGroup(self::GROUP_ID, 'Test SCIMv2', ['members' => [['value' => 'u3']]])]);
@@ -420,7 +420,7 @@ final class OktaTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('1.4.14 AIW membership: PUT with the full member list answers 200 with the group')]
+    #[TestDox('AIW membership: PUT with the full member list answers 200 with the group')]
     public function replacesMembership(): void
     {
         $this->seed(groups: [self::storedGroup(self::GROUP_ID, 'Test SCIMv2', ['members' => [['value' => 'u3']]])]);
@@ -432,7 +432,7 @@ final class OktaTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('1.4.15 Group delete answers 204 and leaves the member users active (quirk 27)')]
+    #[TestDox('Group delete answers 204 and leaves the member users active')]
     public function deletesGroup(): void
     {
         $user = self::oktaUser(self::USER_ID, 'test.user@okta.local');
@@ -445,7 +445,7 @@ final class OktaTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('1.4.16 Import User Schema: /Schemas has the core User schema and /ResourceTypes names the extension URN (quirk 32)')]
+    #[TestDox('Import User Schema: /Schemas has the core User schema and /ResourceTypes names the extension URN')]
     public function servesSchemaImport(): void
     {
         $this->seed();

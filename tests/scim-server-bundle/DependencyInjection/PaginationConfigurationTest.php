@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\TestDox;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\DependencyInjection\Parameter;
 use Symfony\Component\DependencyInjection\Reference;
 use TacticMedia\ScimServerBundle\TacticMediaScimServerBundle;
 
@@ -25,7 +26,7 @@ final class PaginationConfigurationTest extends KernelTestCase
         $server = $container->getDefinition('tacticmedia_scim_server.server');
         $clock = $server->getArgument('$clock');
 
-        self::assertSame('%kernel.secret%', $server->getArgument('$cursorKey'));
+        self::assertEquals(new Parameter('kernel.secret'), $server->getArgument('$cursorKey'));
         self::assertInstanceOf(Reference::class, $clock);
         self::assertSame(['clock', ContainerInterface::NULL_ON_INVALID_REFERENCE], [(string) $clock, $clock->getInvalidBehavior()]);
         self::assertNull($container->getDefinition('tacticmedia_scim_server.service_provider_config')->getArgument('$cursorTimeoutSeconds'));
@@ -37,7 +38,8 @@ final class PaginationConfigurationTest extends KernelTestCase
     {
         $container = $this->load(['pagination' => ['cursor' => ['key' => '%env(SCIM_CURSOR_KEY)%', 'timeout_seconds' => 300]]]);
 
-        self::assertSame('%env(SCIM_CURSOR_KEY)%', $container->getDefinition('tacticmedia_scim_server.server')->getArgument('$cursorKey'));
+        self::assertEquals(new Parameter(TacticMediaScimServerBundle::CURSOR_KEY_PARAMETER), $container->getDefinition('tacticmedia_scim_server.server')->getArgument('$cursorKey'));
+        self::assertSame('%env(SCIM_CURSOR_KEY)%', $container->getParameter(TacticMediaScimServerBundle::CURSOR_KEY_PARAMETER));
         self::assertSame(300, $container->getDefinition('tacticmedia_scim_server.service_provider_config')->getArgument('$cursorTimeoutSeconds'));
     }
 
@@ -45,9 +47,11 @@ final class PaginationConfigurationTest extends KernelTestCase
     #[TestDox('pagination.cursor: false gives the server no cursor key')]
     public function cursorsCanBeDisabled(): void
     {
-        $arguments = $this->load(['pagination' => ['cursor' => false]])->getDefinition('tacticmedia_scim_server.server')->getArguments();
+        $container = $this->load(['pagination' => ['cursor' => false]]);
+        $arguments = $container->getDefinition('tacticmedia_scim_server.server')->getArguments();
 
         self::assertArrayNotHasKey('$cursorKey', $arguments);
+        self::assertArrayNotHasKey(TacticMediaScimServerBundle::CURSOR_KEY_PARAMETER, $container->getParameterBag()->all());
     }
 
     /**

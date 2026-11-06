@@ -101,8 +101,9 @@ analyses, so it cannot use the root `vendor/`.
 - Add a development tool with `composer require --dev <package>`. Add no other package to the root `require`.
 - The root `conflict` keeps each Symfony component below 8.2, so Rector and the tests use the support floor.
   Composer does not accept a wildcard package name there. When a new Symfony component enters `composer.lock`,
-  add it with `>=8.2`; `composer lint` runs `bin/symfony-pin`, which fails until you do. The package `require`
-  constraints stay `^8.1`.
+  add it with `>=8.2`; `composer lint` runs `bin/symfony-pin`, which fails until you do.
+- A Symfony constraint in a package `require` is `^8.1`. A component with a security advisory that affects 8.1
+  starts at the first fixed patch release, for example `symfony/http-foundation` `^8.1.11`. Do not lower such a floor.
 
 ## Version bump
 

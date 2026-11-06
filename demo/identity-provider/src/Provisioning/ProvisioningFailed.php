@@ -26,6 +26,11 @@ final class ProvisioningFailed extends \RuntimeException
         return new self('The service provider returned a resource without an "id".');
     }
 
+    public static function repeatedCursor(string $cursor): self
+    {
+        return new self(\sprintf('The service provider repeated the cursor "%s".', $cursor));
+    }
+
     public static function alreadyLinked(string $id, string $name, string $holderName): self
     {
         return new self(\sprintf('The service provider resource %s that matches "%s" is already linked to "%s".', $id, $name, $holderName));

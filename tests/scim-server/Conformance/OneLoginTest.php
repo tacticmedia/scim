@@ -10,8 +10,8 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use TacticMedia\ScimServer\Tests\Conformance\Fixtures\IdpClient;
 
 /**
- * OneLogin, var/research/idp-okta-others.md section 2 and the OneLogin quirks of section 7. Its SCIM 1.1 era pages
- * ask for application/json responses, so the requests send and accept application/json.
+ * Request sequences of OneLogin. Its SCIM 1.1 era pages ask for application/json responses, so the requests send and
+ * accept application/json.
  */
 final class OneLoginTest extends KernelTestCase
 {
@@ -21,7 +21,7 @@ final class OneLoginTest extends KernelTestCase
     private const array BODY_HEADERS = ['Content-Type' => 'application/json'];
 
     #[Test]
-    #[TestDox('Enable: the userName filter with a non-existent value answers 200 with no users, as application/json (quirks 8, 35)')]
+    #[TestDox('Enable: the userName filter with a non-existent value answers 200 with no users, as application/json')]
     public function answersConnectionTest(): void
     {
         $this->seed([self::storedUser('u1', 'bjensen')]);
@@ -34,7 +34,7 @@ final class OneLoginTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('Provisioning: filter, POST of the template with an emails object and a custom URN, filter, then PUT with active false (quirks 4, 34, 44, 45)')]
+    #[TestDox('Provisioning: filter, POST of the template with an emails object and a custom URN, filter, then PUT with active false')]
     public function provisionsUser(): void
     {
         $this->seed();
@@ -61,7 +61,7 @@ final class OneLoginTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('Delete: DELETE answers 204; the user then answers 404 and is in no query result (quirk 26)')]
+    #[TestDox('Delete: DELETE answers 204; the user then answers 404 and is in no query result')]
     public function deletesUser(): void
     {
         $this->seed([self::storedUser('u1', 'bjensen'), self::storedUser('u2', 'jsmith')]);
@@ -74,7 +74,7 @@ final class OneLoginTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('Group sync: POST /Groups, then Patch Group answers 204 (quirk 18)')]
+    #[TestDox('Group sync: POST /Groups, then Patch Group answers 204')]
     public function syncsGroup(): void
     {
         $this->seed([self::storedUser('u1', 'bjensen')]);
@@ -86,7 +86,7 @@ final class OneLoginTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('Pagination: GET /Users?count=2&startIndex=3 answers the third and fourth user (quirk 9)')]
+    #[TestDox('Pagination: GET /Users?count=2&startIndex=3 answers the third and fourth user')]
     public function paginates(): void
     {
         $this->seed(array_map(static fn (int $i): array => self::storedUser('u'.$i, 'user'.$i), range(1, 5)));

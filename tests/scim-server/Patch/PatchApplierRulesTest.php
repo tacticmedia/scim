@@ -103,7 +103,7 @@ final class PatchApplierRulesTest extends KernelTestCase
             '{"op":"remove","path":"emails[type eq \"work\"].primary"}',
             [['value' => self::WORK, 'type' => 'work'], self::HOME],
         ];
-        yield 'capitalized sub-attribute (Entra Q19)' => [
+        yield 'capitalized sub-attribute' => [
             '{"op":"Replace","path":"emails[type eq \"home\"].Value","value":"babs@home.example.org"}',
             [['value' => self::WORK, 'type' => 'work', 'primary' => true], ['value' => 'babs@home.example.org', 'type' => 'home']],
         ];
@@ -140,7 +140,7 @@ final class PatchApplierRulesTest extends KernelTestCase
     {
         yield 'remove a sub-attribute' => ['{"op":"remove","path":"name.formatted"}', ['familyName' => 'familyName', 'givenName' => 'givenName']];
         yield 'remove an absent sub-attribute' => ['{"op":"remove","path":"name.middleName"}', ['formatted' => 'givenName familyName', 'familyName' => 'familyName', 'givenName' => 'givenName']];
-        yield 'replace with "" (Entra Q12)' => ['{"op":"replace","path":"name.formatted","value":""}', ['familyName' => 'familyName', 'givenName' => 'givenName']];
+        yield 'replace with ""' => ['{"op":"replace","path":"name.formatted","value":""}', ['familyName' => 'familyName', 'givenName' => 'givenName']];
         yield 'remove the attribute' => ['{"op":"remove","path":"name"}', null];
         yield 'add a sub-attribute' => ['{"op":"add","path":"name.middleName","value":"Jane"}', ['formatted' => 'givenName familyName', 'familyName' => 'familyName', 'givenName' => 'givenName', 'middleName' => 'Jane']];
     }
@@ -245,7 +245,7 @@ final class PatchApplierRulesTest extends KernelTestCase
 
     #[Test]
     #[DataProvider('storedGroups')]
-    #[TestDox('Accepts the stored readOnly groups (Okta quirk 2)')]
+    #[TestDox('Accepts the stored readOnly groups')]
     public function acceptsStoredGroups(string $operation): void
     {
         $user = PatchFixtures::user();
@@ -329,7 +329,7 @@ final class PatchApplierRulesTest extends KernelTestCase
         yield 'add a string that equals a stored one' => [['tags' => ['Blue']], '{"op":"add","path":"tags","value":["blue","red"]}', ['tags' => ['Blue', 'red']]];
         yield 'remove listed strings' => [['tags' => ['blue', 'red', 'green']], '{"op":"remove","path":"tags","value":["RED","green"]}', ['tags' => ['blue']]];
         yield 'remove the last listed string' => [['tags' => ['blue']], '{"op":"remove","path":"tags","value":"blue"}', []];
-        yield 'replace the strings with "" (Entra Q12)' => [['tags' => ['a', 'b']], '{"op":"replace","path":"tags","value":""}', []];
+        yield 'replace the strings with ""' => [['tags' => ['a', 'b']], '{"op":"replace","path":"tags","value":""}', []];
         yield 'add "" to the strings' => [['tags' => ['a', 'b']], '{"op":"add","path":"tags","value":""}', ['tags' => ['a', 'b']]];
         yield 'remove "" from the strings' => [['tags' => ['a', '']], '{"op":"remove","path":"tags","value":""}', ['tags' => ['a']]];
     }

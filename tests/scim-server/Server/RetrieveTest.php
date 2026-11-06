@@ -38,7 +38,7 @@ final class RetrieveTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('GET of an unknown id in any shape answers 404 (Okta quirk 21)')]
+    #[TestDox('GET of an unknown id in any shape answers 404')]
     public function answersNotFound(): void
     {
         $server = $this->server([self::storedUser('u1', 'bjensen')]);
@@ -49,7 +49,7 @@ final class RetrieveTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('GET with excludedAttributes=members omits the members of a group (Entra Q13)')]
+    #[TestDox('GET with excludedAttributes=members omits the members of a group')]
     public function excludesMembers(): void
     {
         $server = $this->server(groups: [self::storedGroup('g1', 'Tour Guides', ['members' => [['value' => 'u1', 'type' => 'User']]])]);
@@ -192,7 +192,7 @@ final class RetrieveTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('A client that accepts application/json and not application/scim+json gets application/json (quirk 35)')]
+    #[TestDox('A client that accepts application/json and not application/scim+json gets application/json')]
     public function negotiatesContentType(): void
     {
         $server = $this->server([self::storedUser('u1', 'bjensen')]);

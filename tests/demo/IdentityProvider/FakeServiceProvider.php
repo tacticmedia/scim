@@ -37,6 +37,9 @@ final class FakeServiceProvider
     /** False: /ServiceProviderConfig says that PATCH is not supported. */
     public bool $patchSupported = true;
 
+    /** True: the next request with a cursor gets that cursor back as nextCursor. */
+    public bool $repeatCursor = false;
+
     public function __construct()
     {
         $clock = new MockClock('2026-11-05T10:00:00Z');
@@ -66,6 +69,8 @@ final class FakeServiceProvider
         if (!$this->patchSupported && str_ends_with($url, '/ServiceProviderConfig')) {
             $content = json_encode(['patch' => ['supported' => false]] + (array) json_decode($content, true), \JSON_THROW_ON_ERROR);
         }
+
+        $content = $this->repeatingCursor($request->query->getString('cursor'), $content);
 
         $this->requests[] = [
             'line' => $method.' '.substr($url, \strlen(self::BASE_URL)),
@@ -97,6 +102,17 @@ final class FakeServiceProvider
     public function group(?string $id): array
     {
         return $this->groups->get((string) $id) ?? throw new \OutOfBoundsException(\sprintf('No group %s.', $id));
+    }
+
+    private function repeatingCursor(string $cursor, string $content): string
+    {
+        if (!$this->repeatCursor || '' === $cursor) {
+            return $content;
+        }
+
+        $this->repeatCursor = false;
+
+        return json_encode(['nextCursor' => $cursor] + (array) json_decode($content, true), \JSON_THROW_ON_ERROR);
     }
 
     private function server(): ScimServer

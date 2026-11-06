@@ -49,7 +49,7 @@ final class ListTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('A filter that matches nothing answers 200 with totalResults 0 and empty Resources (Entra Q22, Okta quirk 7)')]
+    #[TestDox('A filter that matches nothing answers 200 with totalResults 0 and empty Resources')]
     public function answersEmptyList(): void
     {
         $server = $this->fiveUsers();
@@ -72,7 +72,7 @@ final class ListTest extends KernelTestCase
         yield 'count above maxResults means maxResults' => [['startIndex' => 2, 'count' => 10], ['u2', 'u3', 'u4'], 2];
         yield 'startIndex past the last match' => [['startIndex' => 9], [], 9];
         yield 'parameter names in any case' => [['STARTINDEX' => 5, 'Count' => '1'], ['u5'], 5];
-        yield 'unknown parameters ignored (quirk 39)' => [['cursor' => 'abc', 'startIndex' => '4'], ['u4', 'u5'], 4];
+        yield 'unknown parameters ignored' => [['cursor' => 'abc', 'startIndex' => '4'], ['u4', 'u5'], 4];
         yield 'empty parameters ignored' => [['startIndex' => '', 'count' => '', 'filter' => '', 'sortBy' => ''], ['u1', 'u2', 'u3'], 1];
     }
 

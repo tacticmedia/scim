@@ -39,8 +39,6 @@ function writeIsolatedComposerJson(string $isolatedDir, array $repositories): vo
     $composerJson['repositories'] = $repositories;
     $composerJson['minimum-stability'] = 'dev';
     $composerJson['prefer-stable'] = true;
-    // The analyser refuses a composer.json with no package or ext-* requirement. It never reports ext-json, a core extension.
-    $composerJson['require']['ext-json'] ??= '*';
     file_put_contents($isolatedDir.'/composer.json', json_encode($composerJson, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
 }
 

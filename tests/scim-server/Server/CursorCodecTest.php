@@ -17,13 +17,35 @@ final class CursorCodecTest extends KernelTestCase
     private const string KEY = 'cursor-key';
 
     #[Test]
-    #[TestDox('Decodes an offset and a repository position')]
+    #[TestDox('Decodes an offset, and an offset with a repository position')]
     public function roundTrips(): void
     {
         $codec = new CursorCodec(self::KEY);
 
-        self::assertSame(7, $codec->decode($codec->encode('q', 7), 'q'));
-        self::assertSame(['Jensen', 1.0, true, null, 3], $codec->decode($codec->encode('q', ['Jensen', 1.0, true, null, 3]), 'q'));
+        self::assertSame([7, null], $codec->decode($codec->encode('q', 7), 'q'));
+        self::assertSame([2, ['Jensen', 1.0, true, null, 3]], $codec->decode($codec->encode('q', 2, ['Jensen', 1.0, true, null, 3]), 'q'));
+    }
+
+    /**
+     * @return iterable<string, array{string, list<int|float|string|bool|null>|null}>
+     */
+    public static function longPositions(): iterable
+    {
+        yield '250 emoji' => [str_repeat("\u{1F600}", 250), [str_repeat("\u{1F600}", 250), 3]];
+        yield '3500 ASCII characters, too long for a cursor' => [str_repeat('x', 3500), null];
+    }
+
+    /**
+     * @param list<int|float|string|bool|null>|null $decoded
+     */
+    #[Test]
+    #[DataProvider('longPositions')]
+    #[TestDox('A position with a value of $_dataName decodes again')]
+    public function encodesLongPosition(string $value, ?array $decoded): void
+    {
+        $codec = new CursorCodec(self::KEY);
+
+        self::assertSame([2, $decoded], $codec->decode($codec->encode('q', 2, [$value, 3]), 'q'));
     }
 
     #[Test]
@@ -49,10 +71,11 @@ final class CursorCodecTest extends KernelTestCase
         yield 'a character outside base64url' => [static fn (string $cursor): string => $cursor.'=', 'q'];
         yield 'shorter than a nonce' => [static fn (): string => 'abc', 'q'];
         yield 'a payload that is not JSON' => [static fn (): string => self::sealed('{'), 'q'];
-        yield 'a payload without an issue time' => [static fn (): string => self::sealed('{"q":"q","p":7}'), 'q'];
-        yield 'a negative offset' => [static fn (): string => self::sealed('{"q":"q","t":0,"p":-1}'), 'q'];
-        yield 'a position that is not a list' => [static fn (): string => self::sealed('{"q":"q","t":0,"p":{"a":1}}'), 'q'];
-        yield 'a position with an object' => [static fn (): string => self::sealed('{"q":"q","t":0,"p":[{"a":1}]}'), 'q'];
+        yield 'a payload without an issue time' => [static fn (): string => self::sealed('{"q":"q","o":7}'), 'q'];
+        yield 'a payload without an offset' => [static fn (): string => self::sealed('{"q":"q","t":0,"p":["a"]}'), 'q'];
+        yield 'a negative offset' => [static fn (): string => self::sealed('{"q":"q","t":0,"o":-1}'), 'q'];
+        yield 'a position that is not a list' => [static fn (): string => self::sealed('{"q":"q","t":0,"o":0,"p":{"a":1}}'), 'q'];
+        yield 'a position with an object' => [static fn (): string => self::sealed('{"q":"q","t":0,"o":0,"p":[{"a":1}]}'), 'q'];
     }
 
     /**
@@ -82,7 +105,7 @@ final class CursorCodecTest extends KernelTestCase
         $cursor = $codec->encode('q', 7);
 
         $clock->sleep(60);
-        self::assertSame(7, $codec->decode($cursor, 'q'));
+        self::assertSame([7, null], $codec->decode($cursor, 'q'));
         $clock->sleep(1);
         $this->expectExceptionObject(ScimException::expiredCursor());
         $codec->decode($cursor, 'q');
@@ -98,7 +121,7 @@ final class CursorCodecTest extends KernelTestCase
 
         $clock->sleep(86400 * 365);
 
-        self::assertSame(7, $codec->decode($cursor, 'q'));
+        self::assertSame([7, null], $codec->decode($cursor, 'q'));
     }
 
     /**

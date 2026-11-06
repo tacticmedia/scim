@@ -67,7 +67,7 @@ final class PatchApplierUserTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('Applies the Entra flag style update: path-less value with dotted and URN-qualified keys (Entra Q4)')]
+    #[TestDox('Applies the Entra flag style update: path-less value with dotted and URN-qualified keys')]
     public function appliesEntraFlagStyleUpdate(): void
     {
         $user = $this->patch(PatchFixtures::user(), <<<'JSON'
@@ -110,7 +110,7 @@ final class PatchApplierUserTest extends KernelTestCase
 
     #[Test]
     #[DataProvider('workEmailCreations')]
-    #[TestDox('Creates the work email from the filter when the user has none (Entra Q6)')]
+    #[TestDox('Creates the work email from the filter when the user has none')]
     public function createsWorkEmailFromFilter(string $body): void
     {
         $user = PatchFixtures::user();
@@ -137,11 +137,11 @@ final class PatchApplierUserTest extends KernelTestCase
      */
     public static function activeChanges(): iterable
     {
-        yield 'Entra default style "False" (Entra Q2)' => [PatchFixtures::body('{"op": "Replace", "path": "active", "value": "False"}'), false];
+        yield 'Entra default style "False"' => [PatchFixtures::body('{"op": "Replace", "path": "active", "value": "False"}'), false];
         yield 'Entra restore "True"' => [PatchFixtures::body('{"op": "Replace", "path": "active", "value": "True"}'), true];
         yield 'Entra flag style false' => [PatchFixtures::body('{"op": "replace", "path": "active", "value": false}'), false];
         yield 'Entra tutorial' => ['{"Operations": [{"op": "Replace", "path": "active", "value": false}], "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"]}', false];
-        yield 'Okta deactivation without path (Okta quirk 1)' => [PatchFixtures::body('{"op": "replace", "value": {"active": false}}'), false];
+        yield 'Okta deactivation without path' => [PatchFixtures::body('{"op": "replace", "value": {"active": false}}'), false];
         yield 'Okta reactivation without path' => [PatchFixtures::body('{"op": "replace", "value": {"active": true}}'), true];
         yield 'Keycloak deactivation' => [PatchFixtures::body('{"op":"replace","path":"active","value":false}'), false];
     }
@@ -165,32 +165,32 @@ final class PatchApplierUserTest extends KernelTestCase
         $ref = 'http://example.com/scim/Users/00aa00aa-bb11-cc22-dd33-44ee44ee44ee';
         $id = '00aa00aa-bb11-cc22-dd33-44ee44ee44ee';
 
-        yield 'M1 list with one object, path without URN' => [
+        yield 'list with one object, path without URN' => [
             PatchFixtures::body('{"op": "Add", "path": "manager", "value": [{"$ref": "'.$ref.'", "value": "'.$id.'"}]}'),
             ['value' => $id, '$ref' => $ref],
         ];
-        yield 'M2 bare id' => [
+        yield 'bare id' => [
             PatchFixtures::body('{"op": "Add", "path": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:manager", "value": "45619541-95de-4d5e-9872-571b5d2c5577"}'),
             ['value' => '45619541-95de-4d5e-9872-571b5d2c5577'],
         ];
-        yield 'M3 object' => [
+        yield 'object' => [
             PatchFixtures::body('{"op": "Add", "path": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:manager", "value": {"value": "'.$id.'"}}'),
             ['value' => $id],
         ];
-        yield 'M4 manager.value' => [
+        yield 'manager.value' => [
             PatchFixtures::body('{"op": "replace", "path": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:manager.value", "value": "'.$id.'"}'),
             ['value' => $id],
         ];
-        yield 'M5 path-less add' => [
+        yield 'path-less add' => [
             PatchFixtures::body('{"op": "Add", "value": {"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:manager": {"value": "'.$id.'"}}}'),
             ['value' => $id],
         ];
-        yield 'M5 path-less replace' => [
+        yield 'path-less replace' => [
             PatchFixtures::body('{"op": "replace", "value": {"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:manager": {"value": "'.$id.'"}}}'),
             ['value' => $id],
         ];
-        yield 'M6 remove' => [PatchFixtures::body('{"op": "remove", "path": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:manager"}'), null];
-        yield 'M7 replace with "" (Entra Q12)' => [PatchFixtures::body('{"op": "replace", "path": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:manager", "value": ""}'), null];
+        yield 'remove' => [PatchFixtures::body('{"op": "remove", "path": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:manager"}'), null];
+        yield 'replace with ""' => [PatchFixtures::body('{"op": "replace", "path": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:manager", "value": ""}'), null];
         yield 'replace with null' => [PatchFixtures::body('{"op": "replace", "path": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:manager", "value": null}'), null];
         yield 'remove manager.value' => [PatchFixtures::body('{"op": "remove", "path": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:manager.value"}'), null];
     }
@@ -260,7 +260,7 @@ final class PatchApplierUserTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('Merges the object value of a path that is the extension URN (Keycloak, quirk 40)')]
+    #[TestDox('Merges the object value of a path that is the extension URN (Keycloak)')]
     public function mergesExtensionUrnPath(): void
     {
         $user = $this->patch(PatchFixtures::user(), PatchFixtures::body(<<<'JSON'
@@ -315,7 +315,7 @@ final class PatchApplierUserTest extends KernelTestCase
      */
     public static function roleChanges(): iterable
     {
-        yield 'SingleAppRoleAssignment with "True" (Entra Q3)' => [
+        yield 'SingleAppRoleAssignment with "True"' => [
             PatchFixtures::body('{"op": "Replace", "path": "roles[primary eq \"True\"].value", "value": "Admin"}'),
             [['primary' => true, 'value' => 'Admin']],
         ];
@@ -323,7 +323,7 @@ final class PatchApplierUserTest extends KernelTestCase
             PatchFixtures::body('{"op": "replace", "path": "roles[primary eq true].type", "value": "I6T3MZAC1HXV"}'),
             [['primary' => true, 'type' => 'I6T3MZAC1HXV']],
         ];
-        yield 'AppRoleAssignmentsComplex with JSON strings (Entra Q18)' => [
+        yield 'AppRoleAssignmentsComplex with JSON strings' => [
             PatchFixtures::body(<<<'JSON'
                 {
                     "op": "Add",

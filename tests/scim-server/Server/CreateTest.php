@@ -82,7 +82,7 @@ final class CreateTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('POST with a userName in use, in another case, answers 409 uniqueness and stores nothing (Okta quirk 20)')]
+    #[TestDox('POST with a userName in use, in another case, answers 409 uniqueness and stores nothing')]
     public function rejectsDuplicateUserName(): void
     {
         $server = $this->server([self::storedUser('u1', 'bjensen')]);
@@ -124,7 +124,7 @@ final class CreateTest extends KernelTestCase
     public static function acceptedBodies(): iterable
     {
         yield 'application/scim+json' => ['{"userName":"bjensen"}', ['Content-Type' => 'application/scim+json']];
-        yield 'application/json with charset (Okta quirk 34)' => ['{"userName":"bjensen"}', ['Content-Type' => 'Application/JSON; charset=utf-8']];
+        yield 'application/json with charset' => ['{"userName":"bjensen"}', ['Content-Type' => 'Application/JSON; charset=utf-8']];
         yield 'no Content-Type' => [' {"userName":"bjensen"}', ['Content-Type' => '']];
     }
 

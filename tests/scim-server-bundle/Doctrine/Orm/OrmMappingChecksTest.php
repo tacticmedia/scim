@@ -66,6 +66,19 @@ final class OrmMappingChecksTest extends KernelTestCase
     }
 
     #[Test]
+    #[TestDox('#[ScimSoftDelete] that writes a DateTimeImmutable into a datetime column fails')]
+    public function mutableSoftDeleteColumnFails(): void
+    {
+        $metadata = clone self::createSchema()->getClassMetadata(self::USER);
+        $metadata->fieldMappings['deletedAt'] = clone $metadata->fieldMappings['deletedAt'];
+        $metadata->fieldMappings['deletedAt']->type = 'datetime';
+
+        $this->expectExceptionObject(new MappingException([self::USER.'::$deletedAt: #[ScimSoftDelete] writes a DateTimeImmutable, but $deletedAt is a datetime column, which takes a DateTime. Type $deletedAt as ?\DateTime, or map it to the datetime_immutable type.']));
+
+        OrmMappingChecks::check(self::mappings()->get('User'), $metadata, self::mappings());
+    }
+
+    #[Test]
     #[TestDox('One exception lists every mismatch of a mapping')]
     public function listsEveryMismatch(): void
     {

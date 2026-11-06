@@ -9,8 +9,8 @@ use TacticMedia\ScimDemo\IdentityProvider\Repository\ProvisioningSettingsReposit
 
 /**
  * Reads every user of the service provider page by page. Keycloak asks for an empty cursor first (RFC 9865), follows
- * nextCursor, and continues by startIndex when the first page has none. The other dialects page by startIndex. Each
- * call flushes the log entries, also when it fails.
+ * nextCursor, fails when a nextCursor repeats a cursor it sent, and continues by startIndex when the first page has
+ * none. The other dialects page by startIndex. Each call flushes the log entries, also when it fails.
  *
  * @see https://github.com/shebang-labs/scim-outbound-for-keycloak/blob/main/src/main/java/io/shebanglabs/scimoutbound/http/UserListing.java
  */
@@ -30,7 +30,7 @@ final readonly class UserImporter
      *
      * @return list<array<mixed>>
      *
-     * @throws ProvisioningFailed when a page request fails
+     * @throws ProvisioningFailed when a page request fails or a nextCursor repeats
      */
     public function import(int $count = self::PAGE_SIZE): array
     {
@@ -54,10 +54,13 @@ final readonly class UserImporter
             return [] !== $users && \count($users) < $this->totalResults($page) ? $this->byIndex($count, 1 + \count($users), $users) : $users;
         }
 
+        $sentCursors = [];
+
         while (null !== $cursor) {
+            $sentCursors[] = $cursor;
             $page = $this->scim->send('GET', '/Users', ['cursor' => $cursor, 'count' => $count]);
             $users = [...$users, ...$this->resources($page)];
-            $cursor = $this->nextCursor($page);
+            $cursor = $this->nextCursor($page, $sentCursors);
         }
 
         return $users;
@@ -92,10 +95,15 @@ final readonly class UserImporter
 
     /**
      * @param array<mixed> $page
+     * @param list<string> $sentCursors
      */
-    private function nextCursor(array $page): ?string
+    private function nextCursor(array $page, array $sentCursors = []): ?string
     {
         $cursor = Json::string($page, 'nextCursor');
+
+        if (\in_array($cursor, $sentCursors, true)) {
+            throw ProvisioningFailed::repeatedCursor($cursor);
+        }
 
         return '' === $cursor ? null : $cursor;
     }

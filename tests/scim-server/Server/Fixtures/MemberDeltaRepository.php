@@ -19,11 +19,14 @@ use TacticMedia\ScimServer\Repository\ValuesStep;
 /**
  * Changes core attributes by delta on top of an InMemoryResourceRepository, with set semantics by "value". get()
  * leaves out the delta attributes that $excludedAttributes names. The value self::UNKNOWN names no resource.
- * Records the hints of get() as "<id> excludedAttributes=<paths>" and every ResourcePatch.
+ * Records the hints of get() as "<id> excludedAttributes=<paths>" and every ResourcePatch. With $reportsEveryStep,
+ * patch() returns one ValuesChange per step, also for a step without effect.
  */
 final class MemberDeltaRepository implements DeltaRepository
 {
     public const string UNKNOWN = 'unknown-member';
+
+    public bool $reportsEveryStep = false;
 
     /** @var list<string> */
     public array $gets = [];
@@ -68,7 +71,7 @@ final class MemberDeltaRepository implements DeltaRepository
             [$document, $changes[]] = $this->applyStep($document, $step);
         }
 
-        $changes = array_values(array_filter($changes, static fn (ValuesChange $change): bool => [] !== $change->added || [] !== $change->removed));
+        $changes = $this->reportsEveryStep ? $changes : array_values(array_filter($changes, static fn (ValuesChange $change): bool => [] !== $change->added || [] !== $change->removed));
         $written = null === $patch->document && [] === $changes ? $stored : $this->inner->replace($id, $document);
 
         return new PatchResult($this->without($written, $this->deltaAttributes), $changes);

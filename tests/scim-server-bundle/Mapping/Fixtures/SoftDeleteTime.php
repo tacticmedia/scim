@@ -13,6 +13,6 @@ final class SoftDeleteTime
 {
     use UserBasics;
 
-    #[ScimSoftDelete(revive: false)]
+    #[ScimSoftDelete(revive: true)]
     public ?\DateTime $deletedAt = null;
 }

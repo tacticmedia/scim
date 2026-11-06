@@ -88,7 +88,7 @@ final class PatchApplierGroupTest extends KernelTestCase
      */
     #[Test]
     #[DataProvider('repeatedAdds')]
-    #[TestDox('Adds a present member without change (Okta quirk 16)')]
+    #[TestDox('Adds a present member without change')]
     public function addsPresentMemberWithoutChange(array $memberIds, string $body): void
     {
         $group = PatchFixtures::group($memberIds);
@@ -101,7 +101,7 @@ final class PatchApplierGroupTest extends KernelTestCase
      */
     public static function memberRemovals(): iterable
     {
-        yield 'Entra default style (Entra Q8)' => [<<<'JSON'
+        yield 'Entra default style' => [<<<'JSON'
             {
                 "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
                 "Operations": [{
@@ -115,9 +115,9 @@ final class PatchApplierGroupTest extends KernelTestCase
             }
             JSON];
         yield 'Entra default style without $ref' => [PatchFixtures::body('{"op": "Remove", "path": "members", "value": [{"value": "f648f8d5ea4e4cd38e9c"}]}')];
-        yield 'Entra flag style (Entra Q9)' => [PatchFixtures::body('{"op": "remove", "path": "members[value eq \"f648f8d5ea4e4cd38e9c\"]"}')];
-        yield 'Keycloak list (Okta quirk 13)' => [PatchFixtures::body('{"op":"remove","path":"members","value":[{"value":"f648f8d5ea4e4cd38e9c"}]}')];
-        yield 'Keycloak fallback (Okta quirk 12)' => [PatchFixtures::body('{"op":"remove","path":"members[value eq \"f648f8d5ea4e4cd38e9c\"]"}')];
+        yield 'Entra flag style' => [PatchFixtures::body('{"op": "remove", "path": "members[value eq \"f648f8d5ea4e4cd38e9c\"]"}')];
+        yield 'Keycloak list' => [PatchFixtures::body('{"op":"remove","path":"members","value":[{"value":"f648f8d5ea4e4cd38e9c"}]}')];
+        yield 'Keycloak fallback' => [PatchFixtures::body('{"op":"remove","path":"members[value eq \"f648f8d5ea4e4cd38e9c\"]"}')];
         yield 'RFC example without space' => [PatchFixtures::body('{"op":"remove","path":"members[value eq\"f648f8d5ea4e4cd38e9c\"]"}')];
         yield 'value list with $ref and type' => [PatchFixtures::body('{"op":"remove","path":"members","value":[{"value":"f648f8d5ea4e4cd38e9c","$ref":"https://example.com/v2/Users/f648f8d5ea4e4cd38e9c","type":"User"}]}')];
     }
@@ -173,7 +173,7 @@ final class PatchApplierGroupTest extends KernelTestCase
      */
     public static function membershipPushes(): iterable
     {
-        yield 'Okta full push (Okta quirk 14)' => [
+        yield 'Okta full push' => [
             <<<'JSON'
                 {
                   "schemas": [
@@ -229,7 +229,7 @@ final class PatchApplierGroupTest extends KernelTestCase
     public static function renames(): iterable
     {
         yield 'Entra' => [PatchFixtures::body('{"op": "Replace", "path": "displayName", "value": "1879db59-3bdf-4490-ad68-ab880a269474updatedDisplayName"}')];
-        yield 'Okta with the readOnly id (Okta quirk 2)' => [<<<'JSON'
+        yield 'Okta with the readOnly id' => [<<<'JSON'
             {
                 "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
                 "Operations": [{
@@ -256,7 +256,7 @@ final class PatchApplierGroupTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('Returns the stored document for an Okta rename to the same name (Okta quirk 17)')]
+    #[TestDox('Returns the stored document for an Okta rename to the same name')]
     public function keepsDocumentForUnchangedRename(): void
     {
         $group = PatchFixtures::group(['u1']);

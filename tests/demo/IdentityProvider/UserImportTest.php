@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestDox;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use TacticMedia\ScimDemo\IdentityProvider\Provisioning\Dialect;
+use TacticMedia\ScimDemo\IdentityProvider\Provisioning\ProvisioningFailed;
 use TacticMedia\ScimDemo\IdentityProvider\Provisioning\UserImporter;
 
 #[TestDox('User import')]
@@ -38,6 +39,25 @@ final class UserImportTest extends KernelTestCase
         self::assertSame(['GET /Users?cursor&count=2', 'GET /Users?cursor='.$nextCursor.'&count=2'], array_column($this->serviceProvider->requests, 'line'));
         self::assertArrayNotHasKey('nextCursor', (array) $this->serviceProvider->requests[1]['response']);
         self::assertSame(['ada', 'grace', 'linus'], array_column($users, 'userName'));
+    }
+
+    #[Test]
+    #[TestDox('Keycloak stops when the service provider repeats a cursor')]
+    public function stopsOnRepeatedCursor(): void
+    {
+        self::useSettings(Dialect::Keycloak);
+        $this->seedServiceProvider();
+        $this->serviceProvider->repeatCursor = true;
+
+        try {
+            self::service(UserImporter::class)->import(2);
+            self::fail('The import did not fail.');
+        } catch (ProvisioningFailed $provisioningFailed) {
+            $cursor = $this->serviceProvider->requests[0]['response']['nextCursor'] ?? null;
+            self::assertIsString($cursor);
+            self::assertSame(\sprintf('The service provider repeated the cursor "%s".', $cursor), $provisioningFailed->getMessage());
+            self::assertSame(['GET /Users?cursor&count=2', 'GET /Users?cursor='.$cursor.'&count=2'], array_column($this->serviceProvider->requests, 'line'));
+        }
     }
 
     #[Test]

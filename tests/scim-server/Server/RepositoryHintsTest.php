@@ -46,7 +46,7 @@ final class RepositoryHintsTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('GET of a group with excludedAttributes=members passes the resolved path (Entra Q13)')]
+    #[TestDox('GET of a group with excludedAttributes=members passes the resolved path')]
     public function passesExcludedAttributes(): void
     {
         $this->send('GET', '/Groups/g1?excludedAttributes=members');
