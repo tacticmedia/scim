@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Fake identity provider{% endblock %}</title>
+    <style>
+        body { font-family: system-ui, sans-serif; margin: 0 auto; max-width: 80rem; padding: 0 1rem 2rem; color: #222; }
+        header { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; padding: 1rem 0; border-bottom: 1px solid #ccc; }
+        header strong { margin-right: auto; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border-bottom: 1px solid #ddd; padding: .4rem; text-align: left; vertical-align: top; }
+        form.inline { display: inline; }
+        form div { margin-bottom: .6rem; }
+        label { display: block; font-weight: 600; }
+        input[type=checkbox] + label, div > label:has(input) { display: inline; font-weight: normal; }
+        .flash { padding: .5rem; border-radius: .25rem; }
+        .flash-success { background: #e6f4ea; }
+        .flash-error { background: #fce8e6; }
+        .failed { color: #b00020; }
+        pre { background: #f6f8fa; padding: .5rem; margin: .25rem 0; overflow-x: auto; font-size: .85rem; }
+        code { font-size: .85rem; overflow-wrap: anywhere; }
+    </style>
+</head>
+<body>
+<header>
+    <strong>Fake identity provider</strong>
+    <a href="{{ path('user_index') }}">Users</a>
+    <a href="{{ path('group_index') }}">Groups</a>
+    <a href="{{ path('settings') }}">Settings</a>
+    <a href="{{ path('provisioning_log') }}">Provisioning log</a>
+    <a href="{{ path('import') }}">Import</a>
+    <form class="inline" method="post" action="{{ path('provision_all') }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('provision') }}">
+        <button>Provision everything</button>
+    </form>
+</header>
+{% for type, messages in app.flashes %}
+    {% for message in messages %}
+        <p class="flash flash-{{ type }}">{{ message }}</p>
+    {% endfor %}
+{% endfor %}
+{% block body %}{% endblock %}
+</body>
+</html>

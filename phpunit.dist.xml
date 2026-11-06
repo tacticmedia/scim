@@ -25,6 +25,12 @@
         <testsuite name="scim-server-bundle">
             <directory>tests/scim-server-bundle</directory>
         </testsuite>
+        <testsuite name="demo">
+            <directory>tests/demo</directory>
+        </testsuite>
+        <testsuite name="tooling">
+            <directory>tests/tooling</directory>
+        </testsuite>
     </testsuites>
 
     <source ignoreSuppressionOfDeprecations="true"
@@ -35,6 +41,8 @@
         <include>
             <directory>scim-server/src</directory>
             <directory>scim-server-bundle/src</directory>
+            <directory>demo/identity-provider/src</directory>
+            <directory>demo/service-provider/src</directory>
         </include>
 
         <deprecationTrigger>

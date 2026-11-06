@@ -12,7 +12,7 @@ the split repositories ([docs/release.md](docs/release.md)).
 
 ## Start
 
-Requirements: PHP 8.5, Composer 2. `make ci` also needs Docker.
+Requirements: PHP 8.5 with Xdebug, Composer 2. `make ci` also needs Docker.
 
 ```bash
 composer install
@@ -20,3 +20,15 @@ make qa-check
 ```
 
 [AGENTS.md](AGENTS.md) gives the layout, the rules and the commands. [docs/ci.md](docs/ci.md) describes CI.
+
+## Demo
+
+`demo/` contains a fake identity provider and a service provider that uses the bundle. The identity provider sends
+the SCIM requests of Microsoft Entra ID, Okta and Keycloak.
+
+```bash
+make demo
+```
+
+The service provider starts on http://127.0.0.1:8001 and the identity provider on http://127.0.0.1:8000. Ctrl-C
+stops both. [demo/README.md](demo/README.md) tells how to use the demo and how to run its end-to-end test.

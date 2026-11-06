@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Groups{% endblock %}
+
+{% block body %}
+    <h1>Groups</h1>
+    <p><a href="{{ path('group_new') }}">New group</a></p>
+    <table>
+        <thead>
+        <tr><th>Display name</th><th>Members</th><th>SCIM id</th><th></th></tr>
+        </thead>
+        <tbody>
+        {% for group in groups %}
+            <tr>
+                <td><a href="{{ path('group_edit', {id: group.id}) }}">{{ group.displayName }}</a></td>
+                <td>{{ group.members|map(member => member.userName)|join(', ') }}</td>
+                <td><code>{{ group.scimId ?? 'not provisioned' }}</code></td>
+                <td>
+                    <form class="inline" method="post" action="{{ path('group_delete', {id: group.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('group-' ~ group.id) }}">
+                        <button>Delete</button>
+                    </form>
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="4">No groups.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

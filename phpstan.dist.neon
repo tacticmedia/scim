@@ -8,9 +8,13 @@ parameters:
         - vendor/autoload.php
     paths:
         - bin/console
+        - bin/coverage
         - bin/dependencies
+        - bin/symfony-pin
         - scim-server/src/
         - scim-server-bundle/src/
+        - demo/identity-provider/src/
+        - demo/service-provider/src/
         - tests/
 
     cognitive_complexity:

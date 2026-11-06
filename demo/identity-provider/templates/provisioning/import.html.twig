@@ -1,0 +1,47 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Import{% endblock %}
+
+{% block body %}
+    <h1>Import</h1>
+    <p>
+        The IdP reads every user of the service provider page by page, as the selected dialect does. Keycloak pages by
+        cursor (RFC 9865), the other dialects by <code>startIndex</code>. The directory does not change.
+    </p>
+    <form method="post" action="{{ path('import') }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('import') }}">
+        <div>
+            <label for="count">Users per page</label>
+            <input id="count" name="count" type="number" min="1" value="{{ count }}">
+        </div>
+        <button>Import</button>
+    </form>
+    {% if entries is not empty %}
+        <h2>Requests</h2>
+        <ol id="requests">
+            {% for entry in entries %}
+                <li><code>{{ entry.method }} {{ entry.url }}</code> <strong class="{{ entry.succeeded ? '' : 'failed' }}">{{ entry.status ?: 'not reached' }}</strong></li>
+            {% endfor %}
+        </ol>
+    {% endif %}
+    {% if users is not null %}
+        <h2>Users of the service provider</h2>
+        <table id="users">
+            <thead>
+            <tr><th>SCIM id</th><th>User name</th><th>Display name</th><th>Active</th></tr>
+            </thead>
+            <tbody>
+            {% for user in users %}
+                <tr>
+                    <td><code>{{ user.id ?? '' }}</code></td>
+                    <td>{{ user.userName ?? '' }}</td>
+                    <td>{{ user.displayName ?? '' }}</td>
+                    <td>{{ user.active is defined ? (user.active ? 'yes' : 'no') }}</td>
+                </tr>
+            {% else %}
+                <tr><td colspan="4">The service provider has no users.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock %}

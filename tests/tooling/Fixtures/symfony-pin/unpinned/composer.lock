@@ -1,0 +1,1 @@
+{"packages": [{"name": "symfony/http-kernel", "version": "v8.1.11"}], "packages-dev": [{"name": "symfony/routing", "version": "v8.1.11"}, {"name": "symfony/uid", "version": "v8.1.9"}]}

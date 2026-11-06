@@ -65,7 +65,8 @@ for job in "$@"; do
     snapshot
     reset_daemon
     # act runs a job's needs in the same workspace and daemon; this loop runs each job on its own.
-    runner sed -i '/^    needs:/d' "$workflow"
+    # With --bind, all matrix entries of a job share the workspace, so they must run one at a time.
+    runner sed -i -e '/^    needs:/d' -e '/^    strategy:$/a\      max-parallel: 1' "$workflow"
     {
         status=0
         runner act push --workflows "$workflow" --job "$job" --eventpath .github/act/event.json 2>&1 || status=$?

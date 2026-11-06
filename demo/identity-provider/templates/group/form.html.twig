@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ group.id ? 'Edit group' : 'New group' }}{% endblock %}
+
+{% block body %}
+    <h1>{{ group.id ? 'Edit group ' ~ group.displayName : 'New group' }}</h1>
+    {{ form_start(form) }}
+    {{ form_widget(form) }}
+    <button>Save and provision</button>
+    {{ form_end(form) }}
+{% endblock %}

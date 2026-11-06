@@ -1,0 +1,1 @@
+{"conflict": {"symfony/http-kernel": ">=8.2", "symfony/routing": ">=8.2"}}

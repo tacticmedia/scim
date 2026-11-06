@@ -1,0 +1,37 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Users{% endblock %}
+
+{% block body %}
+    <h1>Users</h1>
+    <p><a href="{{ path('user_new') }}">New user</a></p>
+    <table>
+        <thead>
+        <tr><th>User name</th><th>Display name</th><th>Department</th><th>Manager</th><th>Active</th><th>SCIM id</th><th></th></tr>
+        </thead>
+        <tbody>
+        {% for user in users %}
+            <tr>
+                <td><a href="{{ path('user_edit', {id: user.id}) }}">{{ user.userName }}</a></td>
+                <td>{{ user.displayName }}</td>
+                <td>{{ user.department }}</td>
+                <td>{{ user.manager ? user.manager.userName }}</td>
+                <td>{{ user.active ? 'yes' : 'no' }}</td>
+                <td><code>{{ user.scimId ?? 'not provisioned' }}</code></td>
+                <td>
+                    <form class="inline" method="post" action="{{ path('user_toggle_active', {id: user.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('user-' ~ user.id) }}">
+                        <button>{{ user.active ? 'Disable' : 'Enable' }}</button>
+                    </form>
+                    <form class="inline" method="post" action="{{ path('user_delete', {id: user.id}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('user-' ~ user.id) }}">
+                        <button>Delete</button>
+                    </form>
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="7">No users. Run <code>idp:seed</code> or create one.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

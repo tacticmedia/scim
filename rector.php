@@ -28,13 +28,14 @@ return RectorConfig::configure()
         typeDeclarations: true,
         typeDeclarationDocblocks: true,
         privatization: true,
-        naming: true,
     )
     ->withAttributesSets(all: true)
     ->withPhpSets(php85: true)
     ->withPaths([
         __DIR__.'/scim-server/src',
         __DIR__.'/scim-server-bundle/src',
+        __DIR__.'/demo/identity-provider/src',
+        __DIR__.'/demo/service-provider/src',
         __DIR__.'/tests',
     ])
     ->withRootFiles()

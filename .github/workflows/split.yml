@@ -3,7 +3,7 @@ name: Split packages
 on:
   push:
     branches: [main]
-    tags: ['v*']
+    tags: ['[0-9]+.[0-9]+.[0-9]+', '[0-9]+.[0-9]+.[0-9]+-*']
 
 permissions:
   contents: read
@@ -31,7 +31,7 @@ jobs:
       - name: Split and push
         env:
           PREFIX: ${{ matrix.package.prefix }}
-          TARGET: https://${{ secrets.SPLIT_TOKEN }}@github.com/${{ matrix.package.repository }}.git
+          TARGET: https://x-access-token:${{ secrets.SPLIT_TOKEN }}@github.com/${{ matrix.package.repository }}.git
         run: |
           split_sha="$(git subtree split --prefix="$PREFIX" HEAD)"
           if [ "$GITHUB_REF_TYPE" = "tag" ]; then

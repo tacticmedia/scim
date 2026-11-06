@@ -1,0 +1,32 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Provisioning log{% endblock %}
+
+{% block body %}
+    <h1>Provisioning log</h1>
+    <p>Newest first.</p>
+    <table>
+        <thead>
+        <tr><th>Time and dialect</th><th>Request</th><th>Response</th></tr>
+        </thead>
+        <tbody>
+        {% for entry in entries %}
+            <tr>
+                <td>{{ entry.time|date('Y-m-d H:i:s') }}<br>{{ entry.dialect.label }}</td>
+                <td>
+                    <code>{{ entry.method }} {{ entry.url }}</code>
+                    <pre>{% for name, value in entry.requestHeaders %}{{ name }}: {{ value }}
+{% endfor %}</pre>
+                    {% if entry.requestBody is not null %}<pre>{{ entry.formattedRequestBody }}</pre>{% endif %}
+                </td>
+                <td>
+                    <strong class="{{ entry.succeeded ? '' : 'failed' }}">{{ entry.status ?: 'not reached' }}</strong>
+                    {% if entry.responseBody is not same as('') %}<pre>{{ entry.formattedResponseBody }}</pre>{% endif %}
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="3">No requests yet.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

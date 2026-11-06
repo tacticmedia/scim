@@ -1,0 +1,13 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use Symfony\Bundle\FrameworkBundle\Console\Application;
+use TacticMedia\ScimDemo\IdentityProvider\Kernel;
+
+require dirname(__DIR__, 3).'/vendor/autoload.php';
+
+$environment = $_SERVER['APP_ENV'] ?? 'dev';
+
+exit(new Application(new Kernel($environment, 'prod' !== $environment))->run());

@@ -90,8 +90,135 @@ jobs:
         with:
           php-version: '8.5'
           extensions: ${{ steps.php-extensions.outputs.list }}
+          coverage: xdebug
+      - name: Install dependencies
+        uses: ramsey/composer-install@v4
+      - name: Run PHPUnit with the coverage gate
+        run: composer coverage
+  databases:
+    name: Tests on ${{ matrix.database }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - database: PostgreSQL 18.6
+            image: postgres:18.6
+            extension: pdo_pgsql
+            port: 5432
+            service-port: 5432
+            data: /var/lib/postgresql
+            health: pg_isready --host 127.0.0.1 --username scim
+            url: postgresql://scim:scim@127.0.0.1:5432/scim?serverVersion=18.6&charset=utf8
+          - database: MySQL 9.7.4
+            image: mysql:9.7.4
+            extension: pdo_mysql
+            port: 3306
+            service-port: 3306
+            data: /var/lib/mysql
+            health: mysqladmin ping --host 127.0.0.1 --password=scim
+            url: mysql://root:scim@127.0.0.1:3306/scim?serverVersion=9.7.4&charset=utf8mb4
+          - database: MySQL 26.10.0
+            image: mysql:26.10.0
+            extension: pdo_mysql
+            port: 3307
+            service-port: 3306
+            data: /var/lib/mysql
+            health: mysqladmin ping --host 127.0.0.1 --password=scim
+            url: mysql://root:scim@127.0.0.1:3307/scim?serverVersion=26.10.0&charset=utf8mb4
+          - database: MariaDB 12.3.3
+            image: mariadb:12.3.3
+            extension: pdo_mysql
+            port: 3308
+            service-port: 3306
+            data: /var/lib/mysql
+            health: healthcheck.sh --connect --innodb_initialized
+            url: mysql://root:scim@127.0.0.1:3308/scim?serverVersion=12.3.3-MariaDB&charset=utf8mb4
+          - database: MariaDB 13.0.2
+            image: mariadb:13.0.2
+            extension: pdo_mysql
+            port: 3309
+            service-port: 3306
+            data: /var/lib/mysql
+            health: healthcheck.sh --connect --innodb_initialized
+            url: mysql://root:scim@127.0.0.1:3309/scim?serverVersion=13.0.2-MariaDB&charset=utf8mb4
+    services:
+      database:
+        image: ${{ matrix.image }}
+        # Each image reads only its own variables.
+        env:
+          POSTGRES_USER: scim
+          POSTGRES_PASSWORD: scim
+          POSTGRES_DB: scim
+          POSTGRES_INITDB_ARGS: --locale-provider=builtin --builtin-locale=C.UTF-8
+          MYSQL_ROOT_PASSWORD: scim
+          MYSQL_DATABASE: scim
+          MARIADB_ROOT_PASSWORD: scim
+          MARIADB_DATABASE: scim
+        # A host port per entry: act runs the entries on one daemon and keeps the service of a failed entry.
+        ports:
+          - ${{ matrix.port }}:${{ matrix.service-port }}
+        # The health commands use TCP, which the images open only after initialization.
+        options: >-
+          --health-cmd "${{ matrix.health }}"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 60
+          --tmpfs ${{ matrix.data }}
+    env:
+      DATABASE_URL: ${{ matrix.url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Collect the required PHP extensions
+        id: php-extensions
+        run: |
+          {
+            printf 'list='
+            jq -r '[(.require // {}, .["require-dev"] // {}) | keys[]
+                    | select(startswith("ext-")) | ltrimstr("ext-")]
+                   | unique | join(", ")' composer.json
+          } >> "$GITHUB_OUTPUT"
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: ${{ steps.php-extensions.outputs.list }}, ${{ matrix.extension }}
           coverage: none
       - name: Install dependencies
         uses: ramsey/composer-install@v4
+      - name: Run PHPUnit
+        run: composer test
+  lowest:
+    name: Tests with the lowest dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Collect the required PHP extensions
+        id: php-extensions
+        run: |
+          {
+            printf 'list='
+            jq -r '[(.require // {}, .["require-dev"] // {}) | keys[]
+                    | select(startswith("ext-")) | ltrimstr("ext-")]
+                   | unique | join(", ")' composer.json
+          } >> "$GITHUB_OUTPUT"
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: ${{ steps.php-extensions.outputs.list }}
+          coverage: none
+      - name: Install the lowest dependencies
+        uses: ramsey/composer-install@v4
+        with:
+          dependency-versions: lowest
       - name: Run PHPUnit
         run: composer test

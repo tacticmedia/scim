@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Demo service provider</title>
+    <style>
+        body { font-family: system-ui, sans-serif; margin: 0 auto; max-width: 80rem; padding: 0 1rem 2rem; color: #222; }
+        header { padding: 1rem 0; border-bottom: 1px solid #ccc; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border-bottom: 1px solid #ddd; padding: .4rem; text-align: left; vertical-align: top; }
+        .note { background: #eef3fb; padding: .5rem; border-radius: .25rem; }
+        code { font-size: .85rem; overflow-wrap: anywhere; }
+    </style>
+</head>
+<body>
+<header><strong>Demo service provider</strong></header>
+<p class="note">
+    The identity provider provisions this data through SCIM. This page only shows it.
+    SCIM base URL: <code>{{ url('tacticmedia_scim_server') }}</code>
+</p>
+
+<h1>Users</h1>
+<table>
+    <thead>
+    <tr><th>Name</th><th>User name</th><th>Email</th><th>Active</th><th>Manager</th><th>Groups</th><th>Department</th></tr>
+    </thead>
+    <tbody>
+    {% for user in users %}
+        <tr>
+            <td>{{ user.displayName }}</td>
+            <td>{{ user.userName }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.active ? 'yes' : 'no' }}</td>
+            <td>{{ user.manager and not user.manager.deleted ? user.manager.displayName ?? user.manager.userName }}</td>
+            <td>{{ user.groups|map(group => group.displayName)|join(', ') }}</td>
+            <td>{{ user.department }}</td>
+        </tr>
+    {% else %}
+        <tr><td colspan="7">No users. Provision them from the identity provider.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<h1>Groups</h1>
+<table>
+    <thead>
+    <tr><th>Display name</th><th>Members</th></tr>
+    </thead>
+    <tbody>
+    {% for group in groups %}
+        <tr>
+            <td>{{ group.displayName }}</td>
+            <td>{{ (group.users|filter(user => not user.deleted)|map(user => user.displayName ?? user.userName))|merge(group.subgroups|map(subgroup => subgroup.displayName ~ ' (group)'))|join(', ') }}</td>
+        </tr>
+    {% else %}
+        <tr><td colspan="2">No groups.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</body>
+</html>

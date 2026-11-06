@@ -1,0 +1,28 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+[, $cloverFile, $minimumPercent] = ($argv ?? []) + [null, null, null];
+
+if (!is_string($cloverFile) || !is_numeric($minimumPercent)) {
+    fwrite(STDERR, 'Usage: bin/coverage <clover.xml> <minimum line coverage in percent>'.PHP_EOL);
+
+    exit(2);
+}
+
+$metrics = is_file($cloverFile) ? (simplexml_load_file($cloverFile) ?: null)?->project->metrics : null;
+
+if (null === $metrics) {
+    fwrite(STDERR, sprintf('%s is not a Clover report.', $cloverFile).PHP_EOL);
+
+    exit(2);
+}
+
+$statements = (int) $metrics['statements'];
+$coveredStatements = (int) $metrics['coveredstatements'];
+$coveredPercent = 0 === $statements ? 100.0 : 100 * $coveredStatements / $statements;
+
+printf('Line coverage: %.2f%% (%d of %d statements). Minimum: %s%%.'.PHP_EOL, $coveredPercent, $coveredStatements, $statements, $minimumPercent);
+
+exit($coveredPercent >= (float) $minimumPercent ? 0 : 1);

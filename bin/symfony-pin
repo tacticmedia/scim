@@ -1,0 +1,48 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/*
+ * Fails when a locked Symfony component has no root "conflict" entry equal to the one of symfony/http-kernel.
+ * AGENTS.md, section Composer, gives the reason.
+ */
+
+$projectDir = ($argv ?? [])[1] ?? dirname(__DIR__);
+
+/**
+ * @return array<string, mixed>
+ */
+function readJson(string $path): array
+{
+    return json_decode((string) file_get_contents($path), true, flags: JSON_THROW_ON_ERROR);
+}
+
+$conflicts = readJson($projectDir.'/composer.json')['conflict'] ?? [];
+$pin = $conflicts['symfony/http-kernel'] ?? null;
+
+if (!is_string($pin)) {
+    fwrite(STDERR, 'composer.json has no "conflict" entry for symfony/http-kernel.'.PHP_EOL);
+
+    exit(1);
+}
+
+$lock = readJson($projectDir.'/composer.lock');
+$pinnedMajor = 1 === preg_match('/(\d+)\./', $pin, $matches) ? (int) $matches[1] : 0;
+$unpinned = [];
+
+foreach ([...$lock['packages'], ...$lock['packages-dev']] as $package) {
+    $isComponentOfPinnedMajor = str_starts_with($package['name'], 'symfony/') && 1 === preg_match('/^v?'.$pinnedMajor.'\./', $package['version']);
+
+    if ($isComponentOfPinnedMajor && $pin !== ($conflicts[$package['name']] ?? null)) {
+        $unpinned[] = $package['name'];
+    }
+}
+
+if ([] !== $unpinned) {
+    fwrite(STDERR, sprintf('Add these packages to "conflict" with "%s": %s', $pin, implode(', ', $unpinned)).PHP_EOL);
+
+    exit(1);
+}
+
+echo sprintf('Every locked Symfony %d component has the conflict "%s".', $pinnedMajor, $pin), PHP_EOL;
