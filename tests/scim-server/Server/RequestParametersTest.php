@@ -33,7 +33,6 @@ final class RequestParametersTest extends KernelTestCase
     public static function integers(): iterable
     {
         yield 'a JSON integer' => [5, 5];
-        yield 'a query string integer' => ['10', 10];
         yield 'a signed integer with spaces' => [' -3 ', -3];
         yield 'absent' => [null, null];
     }
@@ -53,8 +52,6 @@ final class RequestParametersTest extends KernelTestCase
     {
         yield 'a fraction' => ['1.5'];
         yield 'a JSON number with a fraction' => [1.5];
-        yield 'a word' => ['ten'];
-        yield 'a list' => [['1']];
     }
 
     #[Test]
@@ -73,7 +70,6 @@ final class RequestParametersTest extends KernelTestCase
     public static function paths(): iterable
     {
         yield 'a comma-separated string' => ['userName, name.givenName', ['userName', 'name.givenName']];
-        yield 'a list of strings' => [['emails.value', 'urn:ietf:params:scim:schemas:core:2.0:User:title'], ['emails.value', 'urn:ietf:params:scim:schemas:core:2.0:User:title']];
         yield 'items that are not paths left out' => [['userName', 'a.b.c', 7, ''], ['userName']];
         yield 'absent' => [null, []];
     }

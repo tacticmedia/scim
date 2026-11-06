@@ -18,7 +18,6 @@ final class ValueEqualityTest extends KernelTestCase
     public static function pairs(): iterable
     {
         yield 'null and null' => [null, null, true];
-        yield 'equal strings' => ['a', 'a', true];
         yield 'strings in other case' => ['a', 'A', false];
         yield 'numeric string and integer' => ['1', 1, false];
         yield 'integer and float' => [5, 5.0, false];

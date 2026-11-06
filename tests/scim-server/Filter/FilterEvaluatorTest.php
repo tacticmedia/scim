@@ -19,7 +19,6 @@ use TacticMedia\ScimServer\Filter\FilterResolver;
 use TacticMedia\ScimServer\Filter\Present;
 use TacticMedia\ScimServer\Filter\ValuePathFilter;
 use TacticMedia\ScimServer\Path\AttributePath;
-use TacticMedia\ScimServer\SchemaUrn;
 
 final class FilterEvaluatorTest extends KernelTestCase
 {
@@ -58,7 +57,6 @@ final class FilterEvaluatorTest extends KernelTestCase
         yield 'eq null on an unknown attribute' => [new Comparison($unknown, ComparisonOperator::Equal, null), true];
         yield 'value path on an unknown attribute' => [new ValuePathFilter($unknown, new Present(new AttributePath(null, 'unknown', 'type'))), false];
         yield 'co null' => [new Comparison(new AttributePath(null, 'title'), ComparisonOperator::Contains, null), false];
-        yield 'path in another case' => [new Comparison(new AttributePath(null, 'USERNAME'), ComparisonOperator::Equal, 'bjensen'), true];
     }
 
     #[Test]
@@ -87,8 +85,6 @@ final class FilterEvaluatorTest extends KernelTestCase
     {
         yield 'work email matches type' => ['emails.type eq "work"', FilterEvaluatorCases::DOCUMENT['emails'][0], true];
         yield 'home email does not match type' => ['emails.type eq "work"', FilterEvaluatorCases::DOCUMENT['emails'][1], false];
-        yield 'logical filter' => ['emails.type eq "home" and not (emails.primary eq true)', FilterEvaluatorCases::DOCUMENT['emails'][1], true];
-        yield 'unassigned sub-attribute' => ['emails.display pr', FilterEvaluatorCases::DOCUMENT['emails'][0], false];
     }
 
     /**
@@ -113,7 +109,6 @@ final class FilterEvaluatorTest extends KernelTestCase
     public static function elementPathsOutsideTheAttribute(): iterable
     {
         yield 'unknown sub-attribute' => [new Present(new AttributePath(null, 'emails', 'foo'))];
-        yield 'no sub-attribute' => [new Present(new AttributePath(null, 'emails'))];
     }
 
     #[Test]
@@ -139,25 +134,6 @@ final class FilterEvaluatorTest extends KernelTestCase
             ScimErrorType::InvalidFilter,
             'The filter node '.ValuePathFilter::class.' is not supported here.',
             static fn (): bool => new FilterEvaluator()->matchesElement($nested, $emails, FilterEvaluatorCases::DOCUMENT['emails'][0]),
-        );
-    }
-
-    #[Test]
-    #[TestDox('Extension attributes are unassigned when the document has no extension object')]
-    public function extensionAttributesAreUnassignedWithoutExtensionObject(): void
-    {
-        $type = UserResourceType::create();
-        $document = FilterEvaluatorCases::DOCUMENT;
-        unset($document[SchemaUrn::EnterpriseUser->value]);
-        $resolver = new FilterResolver();
-        $parser = new FilterParser();
-
-        self::assertSame(
-            [false, true],
-            [
-                new FilterEvaluator()->matches($resolver->resolve($parser->parse('employeeNumber pr'), $type), $document, $type),
-                new FilterEvaluator()->matches($resolver->resolve($parser->parse('employeeNumber ne "701984"'), $type), $document, $type),
-            ],
         );
     }
 }

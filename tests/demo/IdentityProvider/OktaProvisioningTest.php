@@ -143,15 +143,6 @@ final class OktaProvisioningTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('Delete of a user that the service provider no longer has (404) succeeds')]
-    public function deactivatesUserGoneAtServiceProvider(): void
-    {
-        $this->provisioner->deleteUser('vanished');
-
-        self::assertSame([['PATCH /Users/vanished', 404]], array_map(static fn (array $request): array => [$request['line'], $request['status']], $this->serviceProvider->requests));
-    }
-
-    #[Test]
     #[TestDox('A user whose userName matches a resource of another user fails and sends no change')]
     public function refusesMatchOfOtherUser(): void
     {

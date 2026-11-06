@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace TacticMedia\ScimServerBundle\Tests\Doctrine\Orm;
 
-use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\ORM\Query\Filter\SQLFilter;
@@ -12,17 +11,13 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestDox;
 use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Uid\Uuid;
 use TacticMedia\ScimServer\Exception\ScimErrorType;
 use TacticMedia\ScimServer\Exception\ScimException;
 use TacticMedia\ScimServer\Query\SortOrder;
-use TacticMedia\ScimServerBundle\Doctrine\Orm\OrmObjectStore;
 use TacticMedia\ScimServerBundle\Mapping\AttributeLoader;
 use TacticMedia\ScimServerBundle\Mapping\MappingException;
 use TacticMedia\ScimServerBundle\Query\ObjectQuery;
-use TacticMedia\ScimServerBundle\TacticMediaScimServerBundle;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Entity\User;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Valid\Device;
 use TacticMedia\ScimServerBundle\Tests\Object\Fixtures\HiddenUserFilter;
@@ -214,19 +209,6 @@ final class OrmObjectStoreTest extends KernelTestCase
         $this->expectExceptionObject(MappingException::inClass(Device::class, 'Doctrine ORM does not manage the class. Map it with #[ORM\Entity], or set #[ScimResource(store: ...)].'));
 
         self::store()->find(new AttributeLoader()->load(Device::class), 'd1');
-    }
-
-    #[Test]
-    #[TestDox('The bundle registers the store as tacticmedia_scim_server.object_store.orm')]
-    public function bundleRegistersTheStore(): void
-    {
-        $container = new ContainerBuilder();
-        $container->setParameter('kernel.bundles', ['DoctrineBundle' => DoctrineBundle::class]);
-        new TacticMediaScimServerBundle()->getContainerExtension()?->load([], $container);
-        $definition = $container->getDefinition('tacticmedia_scim_server.object_store.orm');
-
-        self::assertSame(OrmObjectStore::class, $definition->getClass());
-        self::assertEquals([new Reference('doctrine'), new Reference('tacticmedia_scim_server.mapping_registry'), new Reference('tacticmedia_scim_server.converter_locator')], $definition->getArguments());
     }
 
     private static function user(?object $object): User

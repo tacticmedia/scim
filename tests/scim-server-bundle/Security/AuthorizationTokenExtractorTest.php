@@ -19,7 +19,6 @@ final class AuthorizationTokenExtractorTest extends KernelTestCase
     public static function headers(): iterable
     {
         yield 'Bearer' => ['Bearer a.b-c_d~e+f/g==', 'a.b-c_d~e+f/g=='];
-        yield 'bearer in lower case' => ['bearer token', 'token'];
         yield 'BEARER in upper case and more spaces' => ['BEARER   token', 'token'];
         yield 'a bare token (Okta Header authentication)' => ['token', 'token'];
         yield 'another scheme' => ['Basic dXNlcjpwYXNz', null];

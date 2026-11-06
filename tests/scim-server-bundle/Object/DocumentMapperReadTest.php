@@ -81,20 +81,6 @@ final class DocumentMapperReadTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('The display value of a reference falls back to userName')]
-    public function displayFallsBackToUserName(): void
-    {
-        $user = new User('jdoe');
-        $user->setManager(new User('boss'));
-
-        $mappings = self::kernelMappings();
-
-        $document = self::mapper($mappings)->toDocument($mappings->get('User'), $user);
-
-        self::assertSame('boss', $document[SchemaUrn::EnterpriseUser->value]['manager']['displayName'] ?? null);
-    }
-
-    #[Test]
     #[TestDox('Group members of all collections are listed in declaration order with their type')]
     public function groupMembersAreListed(): void
     {

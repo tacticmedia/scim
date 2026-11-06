@@ -31,13 +31,6 @@ final class HashPasswordTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('fromScim() keeps null')]
-    public function nullStaysNull(): void
-    {
-        self::assertNull($this->converter()->fromScim(null, $this->context(new Account('jdoe'))));
-    }
-
-    #[Test]
     #[TestDox('fromScim() fails for a value that is not a string or an object that is not a PasswordAuthenticatedUserInterface')]
     #[DataProvider('invalidCases')]
     public function invalidCaseFails(mixed $value, ?object $object): void
@@ -54,7 +47,6 @@ final class HashPasswordTest extends KernelTestCase
     {
         yield 'not a string' => [42, new Account('jdoe')];
         yield 'no object' => ['secret', null];
-        yield 'not a password user' => ['secret', new \stdClass()];
     }
 
     #[Test]

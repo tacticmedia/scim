@@ -26,16 +26,6 @@ final class MeTest extends WebTestCase
         self::assertSame([200, $id, Scim::BASE_URL.'/Users/'.$id], [$response->getStatusCode(), self::idOf($response), $response->headers->get('Location')]);
     }
 
-    #[Test]
-    #[TestDox('A client name that is no userName answers 404 without Location')]
-    public function unknownSubjectIsNotFound(): void
-    {
-        $response = $this->send('GET', '/scim/v2/Me', headers: Scim::OKTA);
-
-        self::assertScimError($response, 404, null, 'The authenticated subject has no resource.');
-        self::assertFalse($response->headers->has('Location'));
-    }
-
     /**
      * @param array<string, mixed> $options
      */

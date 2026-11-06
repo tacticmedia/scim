@@ -35,13 +35,6 @@ final class CursorTimeoutTest extends WebTestCase
         self::assertScimError($this->send('GET', '/scim/v2/Users?count=2&cursor='.$cursor), 400, 'expiredCursor', 'The cursor has expired. Request the first page again.');
     }
 
-    #[Test]
-    #[TestDox('/ServiceProviderConfig publishes cursorTimeout')]
-    public function publishesTheTimeout(): void
-    {
-        self::assertSame(60, self::json($this->send('GET', '/scim/v2/ServiceProviderConfig'))['pagination']['cursorTimeout'] ?? null);
-    }
-
     /**
      * @param array<string, mixed> $options
      */

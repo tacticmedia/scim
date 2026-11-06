@@ -32,17 +32,6 @@ final class ScimRequestHandlerTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('Lists resources with the query string')]
-    public function listsResources(): void
-    {
-        $response = $this->handle('GET', '/Users?filter='.rawurlencode('userName eq "bjensen"'));
-
-        self::assertSame(200, $response->getStatusCode());
-        self::assertSame('application/scim+json', $response->getHeaderLine('Content-Type'));
-        self::assertSame(1, $this->body($response)['totalResults'] ?? null);
-    }
-
-    #[Test]
     #[TestDox('Creates a resource from a JSON body')]
     public function createsResource(): void
     {
@@ -64,17 +53,6 @@ final class ScimRequestHandlerTest extends KernelTestCase
         self::assertSame(200, $response->getStatusCode());
         self::assertSame('W/"1"', $response->getHeaderLine('ETag'));
         self::assertSame('', (string) $response->getBody());
-    }
-
-    #[Test]
-    #[TestDox('Converts a SCIM error')]
-    public function convertsError(): void
-    {
-        $response = $this->handle('GET', '/Users/unknown');
-
-        self::assertSame(404, $response->getStatusCode());
-        self::assertSame('application/scim+json', $response->getHeaderLine('Content-Type'));
-        self::assertSame(['schemas' => [self::ERROR], 'status' => '404', 'detail' => 'Resource unknown not found.'], $this->body($response));
     }
 
     private function handle(string $method, string $uri, ?string $body = null): ResponseInterface

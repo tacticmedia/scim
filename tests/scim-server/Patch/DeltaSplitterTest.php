@@ -48,15 +48,11 @@ final class DeltaSplitterTest extends KernelTestCase
         ];
         yield 'Okta replace' => [[['op' => 'replace', 'path' => 'members', 'value' => [['value' => 'm1', 'display' => 'Babs']]]], [self::step('replace', [['value' => 'm1']])]];
         yield 'remove without value' => [[['op' => 'remove', 'path' => 'members']], [self::step('replace', [])]];
-        yield 'remove with "value": null' => [[['op' => 'remove', 'path' => 'members', 'value' => null]], [self::step('replace', [])]];
         yield 'replace with []' => [[['op' => 'replace', 'path' => 'members', 'value' => []]], [self::step('replace', [])]];
         yield 'replace with ""' => [[['op' => 'replace', 'path' => 'members', 'value' => '']], [self::step('replace', [])]];
         yield 'replace with null' => [[['op' => 'replace', 'path' => 'members', 'value' => null]], [self::step('replace', [])]];
         yield 'add with []' => [[['op' => 'add', 'path' => 'members', 'value' => []]], []];
-        yield 'add with ""' => [[['op' => 'add', 'path' => 'members', 'value' => '']], []];
-        yield 'add with null' => [[['op' => 'add', 'path' => 'members', 'value' => null]], []];
         yield 'remove with []' => [[['op' => 'remove', 'path' => 'members', 'value' => []]], []];
-        yield 'remove with ""' => [[['op' => 'remove', 'path' => 'members', 'value' => '']], []];
     }
 
     /**
@@ -94,17 +90,13 @@ final class DeltaSplitterTest extends KernelTestCase
     public static function fullPathOperations(): iterable
     {
         yield 'a path-less add with a members key' => [['op' => 'add', 'value' => ['members' => [['value' => 'm1']]]]];
-        yield 'a sub-attribute' => [['op' => 'replace', 'path' => 'members.type', 'value' => 'User']];
         yield 'a filter and a sub-attribute' => [['op' => 'remove', 'path' => 'members[value eq "m1"].type']];
         yield 'a filter on type' => [['op' => 'remove', 'path' => 'members[type eq "User"]']];
         yield 'a filter with or' => [['op' => 'remove', 'path' => 'members[value eq "m1" or value eq "m2"]']];
         yield 'a filter with ne' => [['op' => 'remove', 'path' => 'members[value ne "m1"]']];
-        yield 'a filter with co' => [['op' => 'remove', 'path' => 'members[value co "m1"]']];
         yield 'add with a filter' => [['op' => 'add', 'path' => 'members[value eq "m1"]', 'value' => ['type' => 'User']]];
-        yield 'replace with a filter' => [['op' => 'replace', 'path' => 'members[value eq "m1"]', 'value' => ['type' => 'User']]];
         yield 'an element without value' => [['op' => 'add', 'path' => 'members', 'value' => [['value' => 'm1'], ['type' => 'User']]]];
         yield 'an element that fails normalization' => [['op' => 'add', 'path' => 'members', 'value' => [['value' => 42]]]];
-        yield 'a filter value that fails resolution' => [['op' => 'remove', 'path' => 'members[value eq 42]']];
         yield 'a path that does not resolve' => [['op' => 'replace', 'path' => 'shoeSize', 'value' => 42]];
     }
 

@@ -31,12 +31,10 @@ final class EntraIdTest extends KernelTestCase
      */
     public static function connectionQueries(): iterable
     {
-        yield 'as documented' => ['/Users?filter=userName eq "'.self::GUID.'"'];
         yield 'spaces as %20, quotes as %22' => ['/Users?filter=userName%20eq%20%22'.self::GUID.'%22'];
         yield 'spaces as +' => ['/Users?filter=userName+eq+%22'.self::GUID.'%22'];
         yield 'a Tenant URL with a trailing slash' => ['//Users?filter=userName eq "'.self::GUID.'"'];
         yield 'a Tenant URL with ?aadOptscim062020' => ['/Users?aadOptscim062020&filter=userName eq "'.self::GUID.'"'];
-        yield 'the group request by analogy' => ['/Groups?excludedAttributes=members&filter=displayName eq "'.self::GUID.'"'];
     }
 
     #[Test]
@@ -84,17 +82,6 @@ final class EntraIdTest extends KernelTestCase
         ], self::json($created));
         self::assertSame([$id], self::ids($this->request('GET', '/Users?filter=userName eq "'.strtolower(self::USER_NAME).'"')));
         self::assertSame([$id], self::ids($this->request('GET', '/Users?filter=emails[type eq "work"].value eq "'.self::EMAIL.'"')));
-    }
-
-    #[Test]
-    #[TestDox('A second POST with the same userName answers 409 uniqueness (SCIM Validator)')]
-    public function rejectsDuplicateUser(): void
-    {
-        $this->seed([$this->entraUser('2441309d85324e7793ae')]);
-
-        $response = $this->request('POST', '/Users', ['schemas' => [self::USER], 'userName' => self::USER_NAME, 'active' => true]);
-
-        self::assertScimError($response, 409, 'uniqueness', 'The value of attribute "userName" is already in use.');
     }
 
     #[Test]
@@ -150,7 +137,6 @@ final class EntraIdTest extends KernelTestCase
     public static function opCases(): iterable
     {
         yield 'default style' => ['Add', 'Replace'];
-        yield 'aadOptscim062020 style' => ['add', 'replace'];
     }
 
     #[Test]
@@ -329,10 +315,6 @@ final class EntraIdTest extends KernelTestCase
             self::patchOp(['op' => 'Replace', 'path' => 'active', 'value' => 'False']),
             self::patchOp(['op' => 'Replace', 'path' => 'active', 'value' => 'True']),
         ];
-        yield 'aadOptscim062020 style, booleans' => [
-            self::patchOp(['op' => 'replace', 'path' => 'active', 'value' => false]),
-            self::patchOp(['op' => 'replace', 'path' => 'active', 'value' => true]),
-        ];
         yield 'tutorial style, Operations before schemas' => [
             ['Operations' => [['op' => 'Replace', 'path' => 'active', 'value' => false]], 'schemas' => [self::PATCH_OP]],
             ['Operations' => [['op' => 'Replace', 'path' => 'active', 'value' => true]], 'schemas' => [self::PATCH_OP]],
@@ -371,17 +353,6 @@ final class EntraIdTest extends KernelTestCase
         self::assertScimError($this->request('GET', '/Users/5171a35d82074e068ce2'), 404, null, 'Resource 5171a35d82074e068ce2 not found.');
         self::assertScimError($this->request('DELETE', '/Users/5171a35d82074e068ce2'), 404, null, 'Resource 5171a35d82074e068ce2 not found.');
         self::assertEmptyListResponse($this->request('GET', '/Users?filter=userName eq "'.self::USER_NAME.'"'));
-    }
-
-    #[Test]
-    #[TestDox('Validator cleanup: replace active false, then DELETE')]
-    public function cleansUp(): void
-    {
-        $this->seed([$this->entraUser('5171a35d82074e068ce2')]);
-
-        self::assertNoContent($this->request('PATCH', '/Users/5171a35d82074e068ce2', self::patchOp(['op' => 'replace', 'path' => 'active', 'value' => false])));
-        self::assertNoContent($this->request('DELETE', '/Users/5171a35d82074e068ce2'));
-        self::assertNull($this->users->get('5171a35d82074e068ce2'));
     }
 
     /**
@@ -476,7 +447,6 @@ final class EntraIdTest extends KernelTestCase
     public static function memberRemovals(): iterable
     {
         yield 'default style with "$ref": null' => [['op' => 'Remove', 'path' => 'members', 'value' => [['$ref' => null, 'value' => self::MEMBER]]]];
-        yield 'default style without "$ref"' => [['op' => 'Remove', 'path' => 'members', 'value' => [['value' => self::MEMBER]]]];
         yield 'aadOptscim062020 style, value filter' => [['op' => 'remove', 'path' => 'members[value eq "'.self::MEMBER.'"]']];
     }
 

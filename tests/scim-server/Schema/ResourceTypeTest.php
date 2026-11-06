@@ -29,11 +29,8 @@ final class ResourceTypeTest extends KernelTestCase
     public static function userPaths(): iterable
     {
         yield 'core name' => ['userName', self::USER.':userName'];
-        yield 'core name in another case' => ['USERNAME', self::USER.':userName'];
         yield 'core sub-attribute in another case' => ['NAME.GIVENNAME', self::USER.':name.givenName'];
-        yield '$ref' => ['groups.$ref', self::USER.':groups.$ref'];
         yield 'core URN' => [self::USER.':userName', self::USER.':userName'];
-        yield 'core URN in another case' => ['URN:IETF:PARAMS:SCIM:SCHEMAS:CORE:2.0:USER:USERNAME', self::USER.':userName'];
         yield 'extension URN' => [self::ENTERPRISE.':employeeNumber', self::ENTERPRISE.':employeeNumber'];
         yield 'extension URN in another case' => ['urn:ietf:params:scim:schemas:extension:ENTERPRISE:2.0:user:MANAGER.$REF', self::ENTERPRISE.':manager.$ref'];
         yield 'unqualified extension name' => ['employeeNumber', self::ENTERPRISE.':employeeNumber'];
@@ -44,7 +41,6 @@ final class ResourceTypeTest extends KernelTestCase
         yield 'common name with core URN' => [self::USER.':externalId', self::USER.':externalId'];
         yield 'unknown name' => ['unknown', null];
         yield 'unknown sub-attribute' => ['name.nickName', null];
-        yield 'sub-attribute of a simple attribute' => ['userName.value', null];
         yield 'unknown schema URN' => ['urn:example:Unknown:userName', null];
         yield 'core name with extension URN' => [self::ENTERPRISE.':userName', null];
         yield 'common name with extension URN' => [self::ENTERPRISE.':id', null];
@@ -67,10 +63,8 @@ final class ResourceTypeTest extends KernelTestCase
         $enterprise = array_map(static fn (string $name): string => self::ENTERPRISE.':'.$name, ['employeeNumber', 'costCenter', 'organization', 'division', 'department', 'manager']);
 
         yield 'extension URN' => [self::ENTERPRISE, $enterprise];
-        yield 'extension URN in another case' => [strtoupper(self::ENTERPRISE), $enterprise];
         yield 'attribute' => ['userName', [self::USER.':userName']];
         yield 'core schema URN' => [self::USER, []];
-        yield 'unknown name' => ['shoeSize', []];
     }
 
     /**

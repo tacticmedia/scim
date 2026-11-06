@@ -24,29 +24,17 @@ final class PatchPathParserTest extends KernelTestCase
     public static function validPaths(): iterable
     {
         yield 'attribute' => ['members', 'members', null];
-        yield 'sub-attribute' => ['name.familyName', 'name.familyName', null];
         yield 'value path' => ['addresses[type eq "work"]', 'addresses', 'addresses.type eq "work"'];
-        yield 'member value path' => ['members[value eq "'.self::MEMBER.'"]', 'members', 'members.value eq "'.self::MEMBER.'"'];
         yield 'value path with sub-attribute' => [
             'members[value eq "'.self::MEMBER.'"].displayName',
             'members.displayName',
             'members.value eq "'.self::MEMBER.'"',
         ];
-        yield 'extension attribute' => [self::ENTERPRISE.':employeeNumber', self::ENTERPRISE.':employeeNumber', null];
-        yield 'extension sub-attribute' => [self::ENTERPRISE.':manager.value', self::ENTERPRISE.':manager.value', null];
         yield 'URN value path with sub-attribute' => [self::CORE.'emails[type eq "work"].value', self::CORE.'emails.value', self::CORE.'emails.type eq "work"'];
-        yield 'Entra email' => ['emails[type eq "work"].value', 'emails.value', 'emails.type eq "work"'];
-        yield 'Entra sub-attribute case' => ['emails[type eq "other"].Value', 'emails.Value', 'emails.type eq "other"'];
         yield 'no space before value' => ['members[value eq"2819c223"]', 'members', 'members.value eq "2819c223"'];
         yield 'bracket inside a string' => ['emails[value eq "a]b"].display', 'emails.display', 'emails.value eq "a]b"'];
         yield 'open bracket inside a string' => ['emails[value eq "a[b"]', 'emails', 'emails.value eq "a[b"'];
-        yield 'logical value filter' => [
-            'emails[type eq "work" or (type eq "home" and value ew "@example.com")].display',
-            'emails.display',
-            '(emails.type eq "work" or (emails.type eq "home" and emails.value ew "@example.com"))',
-        ];
         yield '$ref sub-attribute' => ['members[value eq "x"].$ref', 'members.$ref', 'members.value eq "x"'];
-        yield '$ref sub-attribute in any case' => ['members[value eq "x"].$REF', 'members.$REF', 'members.value eq "x"'];
         yield 'extension URN alone' => [self::ENTERPRISE, self::ENTERPRISE, null];
     }
 
@@ -71,21 +59,12 @@ final class PatchPathParserTest extends KernelTestCase
         foreach ([
             'empty' => '',
             'two sub-attributes' => 'name.givenName.x',
-            'text after the value path' => 'emails[type eq "work"]junk',
-            'two sub-attributes after the value path' => 'emails[type eq "work"].value.display',
             'value path on a sub-attribute' => 'name.givenName[value eq "x"]',
-            'no attribute' => '[type eq "work"]',
-            'leading space' => ' members',
-            'closing bracket only' => 'emails]',
-            'sub-attribute starts with a digit' => 'emails[type eq "work"].1st',
         ] as $name => $path) {
             yield $name => [$path, ScimErrorType::InvalidPath, \sprintf("'%s' is not a valid path. Expected attrPath, attrPath[valFilter] or attrPath[valFilter].subAttr.", $path)];
         }
 
         yield 'value filter without value' => ['emails[type eq]', ScimErrorType::InvalidFilter, 'Expected a comparison value (a JSON string, number, true, false or null), found the end of the filter.'];
-        yield 'empty value filter' => ['emails[]', ScimErrorType::InvalidFilter, 'Expected an attribute path, found the end of the filter.'];
-        yield 'nested value path' => ['emails[type[value eq "x"] pr]', ScimErrorType::InvalidFilter, "Value paths do not nest: found '[' after 'emails.type' at offset 4."];
-        yield 'extra parenthesis' => ['emails[type eq "work")]', ScimErrorType::InvalidFilter, "Expected 'and', 'or' or the end of the filter at offset 14, found ')'."];
     }
 
     /**

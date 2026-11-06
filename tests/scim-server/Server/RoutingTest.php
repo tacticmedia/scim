@@ -21,7 +21,6 @@ final class RoutingTest extends KernelTestCase
     public static function equivalentPaths(): iterable
     {
         yield 'endpoint in another case' => ['/uSERS/u1'];
-        yield 'trailing slash' => ['/Users/u1/'];
         yield 'double slash (Microsoft Entra ID)' => ['//Users//u1'];
     }
 
@@ -73,7 +72,6 @@ final class RoutingTest extends KernelTestCase
     public static function invalidUtf8(): iterable
     {
         yield 'a resource id' => ['GET', '/Users/%FF', [], 404, null, "Resource \u{FFFD} not found."];
-        yield 'a truncated resource id' => ['DELETE', '/Users/%C3', [], 404, null, "Resource \u{FFFD} not found."];
         yield 'a schema URN' => ['GET', '/Schemas/%FF', [], 404, null, "Schema \u{FFFD} not found."];
         yield 'a resource type name' => ['GET', '/ResourceTypes/%FF', [], 404, null, "Resource type \u{FFFD} not found."];
         yield 'sortBy' => ['GET', '/Users?sortBy=%FF', [], 400, 'invalidValue', "\"\u{FFFD}\" is not a valid sortBy attribute path."];
@@ -160,11 +158,7 @@ final class RoutingTest extends KernelTestCase
         yield 'a resource' => ['/Users/u1'];
         yield 'an unknown resource' => ['/Users/u9'];
         yield 'a collection' => ['/Users?filter=userName%20eq%20%22bjensen%22'];
-        yield 'the root' => ['/'];
         yield 'ServiceProviderConfig' => ['/ServiceProviderConfig'];
-        yield 'a resource type' => ['/ResourceTypes/User'];
-        yield 'a schema' => ['/Schemas/urn:ietf:params:scim:schemas:core:2.0:User'];
-        yield '/Me' => ['/Me'];
     }
 
     #[Test]

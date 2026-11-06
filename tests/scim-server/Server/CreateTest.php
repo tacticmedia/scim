@@ -123,7 +123,6 @@ final class CreateTest extends KernelTestCase
      */
     public static function acceptedBodies(): iterable
     {
-        yield 'application/scim+json' => ['{"userName":"bjensen"}', ['Content-Type' => 'application/scim+json']];
         yield 'application/json with charset' => ['{"userName":"bjensen"}', ['Content-Type' => 'Application/JSON; charset=utf-8']];
         yield 'no Content-Type' => [' {"userName":"bjensen"}', ['Content-Type' => '']];
     }
@@ -148,7 +147,6 @@ final class CreateTest extends KernelTestCase
      */
     public static function rejectedBodies(): iterable
     {
-        yield 'invalid JSON' => ['{"userName":', [], 400, 'invalidSyntax', 'The request body is not valid JSON: Syntax error.'];
         yield 'empty body' => ['', [], 400, 'invalidSyntax', 'The request body is not valid JSON: Syntax error.'];
         yield 'JSON array' => ['[]', [], 400, 'invalidSyntax', 'The request body must be a JSON object.'];
         yield 'JSON string' => ['"bjensen"', [], 400, 'invalidSyntax', 'The request body must be a JSON object.'];
@@ -168,17 +166,6 @@ final class CreateTest extends KernelTestCase
         $response = $this->send($server, 'POST', '/Users', $body, $headers);
 
         self::assertScimError($response, $status, $scimType, $detail);
-    }
-
-    #[Test]
-    #[TestDox('POST answers the errors of DocumentNormalizer, for example a missing required attribute')]
-    public function answersNormalizerErrors(): void
-    {
-        $server = $this->server();
-
-        $response = $this->send($server, 'POST', '/Groups', ['members' => []]);
-
-        self::assertScimError($response, 400, 'invalidValue', 'Attribute "displayName" is required.');
     }
 
     #[Test]

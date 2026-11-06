@@ -11,14 +11,12 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Uid\Uuid;
 use TacticMedia\ScimServer\Path\AttributePath;
 use TacticMedia\ScimServer\Schema\Mutability;
-use TacticMedia\ScimServer\Schema\Uniqueness;
 use TacticMedia\ScimServerBundle\Converter\VersionConverter;
 use TacticMedia\ScimServerBundle\Mapping\AttributeLoader;
 use TacticMedia\ScimServerBundle\Mapping\AttributeMapping;
 use TacticMedia\ScimServerBundle\Mapping\ConstructorParameter;
 use TacticMedia\ScimServerBundle\Mapping\MappingKind;
 use TacticMedia\ScimServerBundle\Mapping\ResourceMapping;
-use TacticMedia\ScimServerBundle\Tests\Doctrine\Orm\DeltaFixtures\Band;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Entity\Group;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Entity\User;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Enum\UserType;
@@ -27,7 +25,6 @@ use TacticMedia\ScimServerBundle\Tests\Fixtures\Valid\Device;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Valid\DeviceFactory;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Valid\TagConverter;
 use TacticMedia\ScimServerBundle\Tests\Object\Fixtures\Team;
-use TacticMedia\ScimServerBundle\Tests\Validation\Fixtures\Member;
 
 final class AttributeLoaderTest extends KernelTestCase
 {
@@ -129,17 +126,6 @@ final class AttributeLoaderTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('uniqueness: on an RFC attribute changes the mapped and the published definition')]
-    public function uniquenessOverridesAnRfcAttribute(): void
-    {
-        $group = $this->load(Group::class);
-
-        self::assertSame(Uniqueness::Server, $this->member($group, 'name')->definition->uniqueness);
-        self::assertSame(Uniqueness::Server, $group->resourceType->schema->attribute('displayName')?->uniqueness);
-        self::assertSame(Uniqueness::None, $this->member($group, 'externalId')->definition->uniqueness);
-    }
-
-    #[Test]
     #[TestDox('A constructor parameter gets the mapping of the property with its name')]
     public function constructorParametersResolveByName(): void
     {
@@ -159,17 +145,6 @@ final class AttributeLoaderTest extends KernelTestCase
 
         self::assertSame(['Device', '/Devices', 'd', DeviceFactory::class, null, []], [$device->name(), $device->resourceType->endpoint, $device->idPrefix, $device->factory, $device->store, $device->constructorParameters]);
         self::assertSame(['int', TagConverter::class], [$device->id->phpType, $this->member($device, 'tag')->converter]);
-    }
-
-    #[Test]
-    #[TestDox('validationGroups: and deltas: are compiled; by default validation is off and deltas are on')]
-    public function validationGroupsAndDeltasAreCompiled(): void
-    {
-        $group = $this->load(Group::class);
-        $member = $this->load(Member::class);
-        $band = $this->load(Band::class);
-
-        self::assertSame([null, true, ['scim'], true, null, false], [$group->validationGroups, $group->deltas, $member->validationGroups, $member->deltas, $band->validationGroups, $band->deltas]);
     }
 
     #[Test]

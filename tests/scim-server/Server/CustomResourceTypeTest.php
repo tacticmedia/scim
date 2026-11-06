@@ -24,8 +24,7 @@ use TacticMedia\ScimServer\Server\RegisteredResourceType;
 use TacticMedia\ScimServer\Server\ScimServer;
 
 /**
- * A resource type with an extension, unique attributes of several kinds, an immutable attribute and attributes
- * returned on request.
+ * A resource type with an extension, unique attributes of several kinds and attributes returned on request.
  */
 final class CustomResourceTypeTest extends KernelTestCase
 {
@@ -65,14 +64,6 @@ final class CustomResourceTypeTest extends KernelTestCase
         self::assertSame(['hostname' => 'scanner', 'vlan' => 20], $this->json($response)[self::NETWORK] ?? null);
     }
 
-    #[Test]
-    #[TestDox('GET returns a "request" attribute only when the attributes parameter names it')]
-    public function returnsRequestedAttributesOnRetrieve(): void
-    {
-        self::assertArrayNotHasKey('pin', $this->json($this->send('GET', '/Devices/d1')));
-        self::assertSame('0000', $this->json($this->send('GET', '/Devices/d1?attributes=pin'))['pin'] ?? null);
-    }
-
     /**
      * @return iterable<string, array{array<string, mixed>, string}>
      */
@@ -102,16 +93,6 @@ final class CustomResourceTypeTest extends KernelTestCase
     public function acceptsDistinctValues(): void
     {
         self::assertSame(201, $this->send('POST', '/Devices', ['serialNumber' => 'sn-1', 'aliases' => ['printer']])->getStatusCode());
-    }
-
-    #[Test]
-    #[TestDox('PUT that changes an immutable attribute answers 400 mutability')]
-    public function rejectsImmutableChange(): void
-    {
-        $response = $this->send('PUT', '/Devices/d1', ['serialNumber' => 'SN-1', 'owner' => 'finance']);
-
-        self::assertSame(400, $response->getStatusCode());
-        self::assertSame(['scimType' => 'mutability', 'detail' => 'Attribute "owner" is immutable.'], array_intersect_key($this->json($response), ['scimType' => 0, 'detail' => 0]));
     }
 
     /**

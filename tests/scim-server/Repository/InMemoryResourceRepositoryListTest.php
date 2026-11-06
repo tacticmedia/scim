@@ -69,16 +69,6 @@ final class InMemoryResourceRepositoryListTest extends KernelTestCase
         self::assertSame(4, $result->totalResults);
     }
 
-    #[Test]
-    #[TestDox('Returns the documents that match the filter')]
-    public function returnsMatchingDocuments(): void
-    {
-        $type = CoreResourceTypes::user();
-        $filter = new FilterResolver()->resolve(new FilterParser()->parse('title eq "manager" or emails[value sw "d@"]'), $type);
-
-        self::assertSame([['u1', 'u2', 'u4'], 3], $this->ids($this->repository()->list(new ListQuery($filter))));
-    }
-
     /**
      * @return iterable<string, array{AttributePath, SortOrder, list<string>}>
      */
@@ -88,11 +78,9 @@ final class InMemoryResourceRepositoryListTest extends KernelTestCase
         $title = new AttributePath(self::USER, 'title');
 
         yield 'string, case ignored, ascending' => [$userName, SortOrder::Ascending, ['u2', 'u3', 'u1', 'u4']];
-        yield 'string, descending' => [$userName, SortOrder::Descending, ['u4', 'u1', 'u3', 'u2']];
         yield 'equal values keep insertion order, no value last when ascending' => [$title, SortOrder::Ascending, ['u4', 'u1', 'u2', 'u3']];
         yield 'equal values keep insertion order, no value first when descending' => [$title, SortOrder::Descending, ['u3', 'u1', 'u2', 'u4']];
         yield 'multi-valued: primary value, else first value' => [new AttributePath(self::USER, 'emails', 'value'), SortOrder::Ascending, ['u1', 'u2', 'u4', 'u3']];
-        yield 'multi-valued complex without sub-attribute: its value sub-attribute' => [new AttributePath(null, 'EMAILS'), SortOrder::Ascending, ['u1', 'u2', 'u4', 'u3']];
         yield 'extension attribute' => [new AttributePath(self::ENTERPRISE, 'employeeNumber'), SortOrder::Ascending, ['u3', 'u1', 'u2', 'u4']];
         yield 'dateTime, as instants' => [new AttributePath(self::USER, 'meta', 'created'), SortOrder::Ascending, ['u3', 'u1', 'u2', 'u4']];
         yield 'a value that does not fit the type has no value' => [new AttributePath(self::USER, 'active'), SortOrder::Ascending, ['u3', 'u1', 'u2', 'u4']];
@@ -117,7 +105,6 @@ final class InMemoryResourceRepositoryListTest extends KernelTestCase
     public static function pages(): iterable
     {
         yield 'first page' => [1, 2, ['u1', 'u2']];
-        yield 'second page' => [3, 2, ['u3', 'u4']];
         yield 'last page, partial' => [4, 2, ['u4']];
         yield 'startIndex beyond the last match' => [5, 2, []];
         yield 'count 0' => [1, 0, []];

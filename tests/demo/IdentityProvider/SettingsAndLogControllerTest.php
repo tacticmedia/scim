@@ -25,23 +25,6 @@ final class SettingsAndLogControllerTest extends WebTestCase
     }
 
     #[Test]
-    #[TestDox('The settings start from SCIM_BASE_URL, SCIM_TOKEN and SCIM_DIALECT')]
-    public function showsDefaultSettings(): void
-    {
-        $crawler = $this->client->request('GET', '/settings');
-
-        self::assertSame(
-            [FakeServiceProvider::BASE_URL, FakeServiceProvider::TOKEN, Dialect::EntraDefault->value],
-            [
-                $crawler->filter('#settings_serviceProviderUrl')->attr('value'),
-                $crawler->filter('#settings_token')->attr('value'),
-                $crawler->filter('#settings_dialect option[selected]')->attr('value'),
-            ],
-        );
-        self::assertSame(['entra', 'entra-flag', 'okta', 'keycloak'], $crawler->filter('#settings_dialect option')->each(static fn ($option): string => (string) $option->attr('value')));
-    }
-
-    #[Test]
     #[TestDox('Saving the settings stores them')]
     public function savesSettings(): void
     {

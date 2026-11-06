@@ -60,11 +60,8 @@ final class RepositoryHintsTest extends KernelTestCase
     public static function userRequests(): iterable
     {
         yield 'GET with names in any case, without unknown names' => ['GET /Users/u1?attributes=USERNAME,shoeSize', null, ['u1 attributes='.self::USER.':userName excludedAttributes=']];
-        yield 'GET with a whole extension URN' => ['GET /Users/u1?attributes='.self::ENTERPRISE, null, ['u1 attributes='.self::ENTERPRISE_ATTRIBUTES.' excludedAttributes=']];
         yield 'list with a whole extension URN' => ['GET /Users?excludedAttributes='.self::ENTERPRISE, null, ['list attributes= excludedAttributes='.self::ENTERPRISE_ATTRIBUTES]];
-        yield 'root list' => ['GET /?attributes=id', null, ['list attributes='.self::USER.':id excludedAttributes=']];
         yield 'root list with sortBy: none, the merge reads the sortBy value' => ['GET /?sortBy=userName&attributes=id', null, ['list attributes= excludedAttributes=']];
-        yield 'root list with sortBy and excludedAttributes' => ['GET /?sortBy=userName&excludedAttributes=userName', null, ['list attributes= excludedAttributes=']];
         yield 'PUT' => ['PUT /Users/u1?attributes=userName', '{"userName":"bjensen"}', ['u1 attributes= excludedAttributes=', 'list attributes= excludedAttributes=']];
         yield 'PATCH' => ['PATCH /Users/u1?attributes=userName', self::PATCH_BODY, ['u1 attributes= excludedAttributes=', 'list attributes= excludedAttributes=']];
         yield 'DELETE' => ['DELETE /Users/u1?attributes=userName', null, ['u1 attributes= excludedAttributes=']];

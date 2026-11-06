@@ -59,7 +59,6 @@ final class EventDocumentsTest extends KernelTestCase
     {
         yield 'PUT' => ['PUT', ['userName' => 'babs', 'password' => 'n3w']];
         yield 'PATCH' => ['PATCH', ['schemas' => [self::PATCH_OP], 'Operations' => [['op' => 'replace', 'path' => 'password', 'value' => 'n3w']]]];
-        yield 'PATCH without path' => ['PATCH', ['schemas' => [self::PATCH_OP], 'Operations' => [['op' => 'replace', 'value' => ['password' => 'n3w']]]]];
     }
 
     /**

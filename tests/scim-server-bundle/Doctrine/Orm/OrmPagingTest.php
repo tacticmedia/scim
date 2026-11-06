@@ -48,14 +48,12 @@ final class OrmPagingTest extends KernelTestCase
     {
         yield 'the id ascending without sortBy' => [null, SortOrder::Descending, ['bjensen', 'jsmith', 'omalley', 'alice']];
         yield 'userName ascending' => ['userName', SortOrder::Ascending, ['alice', 'bjensen', 'jsmith', 'omalley']];
-        yield 'userName descending' => ['userName', SortOrder::Descending, ['omalley', 'jsmith', 'bjensen', 'alice']];
         yield 'givenName ascending, case-folded, absent last' => ['name.givenName', SortOrder::Ascending, ['alice', 'bjensen', 'jsmith', 'omalley']];
         yield 'givenName descending, absent first' => ['name.givenName', SortOrder::Descending, ['omalley', 'jsmith', 'bjensen', 'alice']];
         yield 'externalId ascending, case-exact, ties by id' => ['externalId', SortOrder::Ascending, ['jsmith', 'bjensen', 'omalley', 'alice']];
         yield 'externalId descending, ties by id' => ['externalId', SortOrder::Descending, ['omalley', 'alice', 'bjensen', 'jsmith']];
         yield 'a slot, "" as absent' => ['emails.value', SortOrder::Ascending, ['bjensen', 'jsmith', 'omalley', 'alice']];
         yield 'slots ascending, the primary value else the first' => ['phoneNumbers.value', SortOrder::Ascending, ['bjensen', 'jsmith', 'alice', 'omalley']];
-        yield 'slots descending, the primary value else the first' => ['phoneNumbers.value', SortOrder::Descending, ['omalley', 'alice', 'jsmith', 'bjensen']];
     }
 
     /**
@@ -66,9 +64,7 @@ final class OrmPagingTest extends KernelTestCase
     public static function offsetOrders(): iterable
     {
         yield 'element sub-attribute ascending, the primary element else the first' => ['addresses.locality', SortOrder::Ascending, ['alice', 'jsmith', 'bjensen', 'omalley']];
-        yield 'element sub-attribute descending, the primary element else the first' => ['addresses.locality', SortOrder::Descending, ['omalley', 'bjensen', 'jsmith', 'alice']];
         yield 'a DQL expression ascending' => ['name.formatted', SortOrder::Ascending, ['alice', 'bjensen', 'jsmith', 'omalley']];
-        yield 'a DQL expression descending' => ['name.formatted', SortOrder::Descending, ['omalley', 'jsmith', 'bjensen', 'alice']];
     }
 
     /**

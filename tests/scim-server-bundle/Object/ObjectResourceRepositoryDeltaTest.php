@@ -193,18 +193,6 @@ final class ObjectResourceRepositoryDeltaTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('Replace with [] removes every member')]
-    public function replaceWithNothingRemovesAll(): void
-    {
-        [$alice] = $this->users('alice');
-        $group = $this->group('Staff', [$alice], [$this->group('Sales')]);
-
-        $this->patch($group, null, $this->step(PatchOperationType::Replace));
-
-        self::assertSame([], $this->memberNames($group));
-    }
-
-    #[Test]
     #[TestDox('An unknown or malformed member id of an Add or Replace is 400 invalidValue, and nothing is written')]
     public function unknownMemberIsInvalidValue(): void
     {

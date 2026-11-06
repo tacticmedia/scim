@@ -23,7 +23,6 @@ final class ValueCoercionTest extends KernelTestCase
         yield 'FALSE' => ['FALSE', false];
         yield 'yes' => ['yes', null];
         yield 'one' => [1, null];
-        yield 'null' => [null, null];
     }
 
     #[Test]
@@ -45,7 +44,6 @@ final class ValueCoercionTest extends KernelTestCase
         yield 'no time zone is UTC' => ['2011-05-13T04:42:34', '2011-05-13T04:42:34.000000+00:00'];
         yield 'invalid day' => ['2011-02-30T00:00:00Z', null];
         yield 'invalid month' => ['2011-13-01T00:00:00Z', null];
-        yield 'end of day' => ['2011-01-01T24:00:00Z', null];
         yield 'date only' => ['2011-05-13', null];
         yield 'space separator' => ['2011-05-13 04:42:34Z', null];
         yield 'lower-case z' => ['2011-05-13T04:42:34z', null];

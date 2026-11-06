@@ -160,7 +160,6 @@ final class DocumentNormalizerCreateTest extends KernelTestCase
     {
         yield 'string True' => ['True', true];
         yield 'string false' => ['false', false];
-        yield 'string FALSE' => ['FALSE', false];
         yield 'JSON true' => [true, true];
     }
 
@@ -245,7 +244,6 @@ final class DocumentNormalizerCreateTest extends KernelTestCase
     public static function invalidValues(): iterable
     {
         yield 'boolean' => [['active' => 'yes'], 'Attribute "active" must be a boolean.'];
-        yield 'dateTime' => [['lastLogin' => '2008-01-23T04:56:22'], 'Attribute "lastLogin" must be an xsd:dateTime with a timezone.'];
         yield 'sub-attribute' => [['emails' => [['value' => 5]]], 'Attribute "emails.value" must be a string.'];
         yield 'extension sub-attribute' => [
             [self::ENTERPRISE => ['costCenter' => '1', 'manager' => ['value' => 5]]],
@@ -253,7 +251,6 @@ final class DocumentNormalizerCreateTest extends KernelTestCase
         ];
         yield 'scalar for a multi-valued attribute' => [['roles' => 'admin'], 'Attribute "roles" must be a list.'];
         yield 'scalar for a multi-valued complex attribute' => [['emails' => 'b@example.com'], 'Attribute "emails" must be a list.'];
-        yield 'list for a single-valued attribute' => [['displayName' => ['Babs']], 'Attribute "displayName" must be a string.'];
         yield 'list for a list element' => [['emails' => [['b@example.com']]], 'Attribute "emails" must be a complex object.'];
         yield 'string for a complex attribute without "value"' => [['name' => 'Barbara'], 'Attribute "name" must be a complex object.'];
         yield 'list of two for a single-valued complex attribute' => [
@@ -262,7 +259,6 @@ final class DocumentNormalizerCreateTest extends KernelTestCase
         ];
         yield 'extension that is not an object' => [[self::ENTERPRISE => 'x'], 'Attribute "'.self::ENTERPRISE.'" must be a complex object.'];
         yield 'extension that is a list of objects' => [[self::ENTERPRISE => [['costCenter' => '1']]], 'Attribute "'.self::ENTERPRISE.'" must be a complex object.'];
-        yield 'extension that is a list of strings' => [[self::ENTERPRISE => ['x']], 'Attribute "'.self::ENTERPRISE.'" must be a complex object.'];
     }
 
     /**

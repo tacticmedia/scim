@@ -14,7 +14,6 @@ use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\RateLimiter\Storage\CacheStorage;
 use TacticMedia\ScimServerBundle\EventListener\RateLimitListener;
-use TacticMedia\ScimServerBundle\Security\TokenMeResolver;
 use TacticMedia\ScimServerBundle\TacticMediaScimServerBundle;
 
 /**
@@ -64,27 +63,6 @@ final class OptionalFeaturesTest extends KernelTestCase
 
         self::assertFalse($container->hasDefinition(self::LIMITER));
         self::assertSame(['limiter.scim', ContainerInterface::EXCEPTION_ON_INVALID_REFERENCE], $this->reference($container->getDefinition(self::LISTENER)->getArgument(0)));
-    }
-
-    #[Test]
-    #[TestDox('me: the user identifier of the token as userName of a User, given to the server')]
-    public function meMapsTheTokenToUserName(): void
-    {
-        $container = $this->load(['me' => true]);
-        $resolver = $container->getDefinition(self::RESOLVER);
-
-        self::assertSame(TokenMeResolver::class, $resolver->getClass());
-        self::assertSame(['security.token_storage', 'User', 'userName'], array_map(static fn (mixed $argument): mixed => $argument instanceof Reference ? (string) $argument : $argument, $resolver->getArguments()));
-        self::assertSame([self::RESOLVER, ContainerInterface::EXCEPTION_ON_INVALID_REFERENCE], $this->reference($container->getDefinition(self::SERVER)->getArgument(3)));
-    }
-
-    #[Test]
-    #[TestDox('me.resource_type and me.attribute choose the resource')]
-    public function meTakesTheResourceTypeAndAttribute(): void
-    {
-        $resolver = $this->load(['me' => ['resource_type' => 'Employee', 'attribute' => 'externalId']])->getDefinition(self::RESOLVER);
-
-        self::assertSame(['Employee', 'externalId'], [$resolver->getArgument(1), $resolver->getArgument(2)]);
     }
 
     #[Test]

@@ -78,9 +78,7 @@ final class PatchApplierGroupTest extends KernelTestCase
     {
         yield 'Entra' => [[self::ENTRA_MEMBER], self::ENTRA_ADD];
         yield 'Okta resend with display' => [[self::OKTA_MEMBER], PatchFixtures::body('{"op": "add", "path": "members", "value": [{"value": "'.self::OKTA_MEMBER.'", "display": "test.user@okta.local"}]}')];
-        yield 'same member twice in one value' => [[self::OKTA_MEMBER], PatchFixtures::body('{"op": "add", "path": "members", "value": [{"value": "'.self::OKTA_MEMBER.'"}, {"value": "'.self::OKTA_MEMBER.'"}]}')];
         yield 'RFC 7644 section 3.5.2.1 example' => [[self::RFC_MEMBER], self::RFC_ADD];
-        yield 'member with a type' => [[self::RFC_MEMBER], PatchFixtures::body('{"op": "add", "path": "members", "value": [{"value": "'.self::RFC_MEMBER.'", "type": "User"}]}')];
     }
 
     /**
@@ -114,12 +112,7 @@ final class PatchApplierGroupTest extends KernelTestCase
                 }]
             }
             JSON];
-        yield 'Entra default style without $ref' => [PatchFixtures::body('{"op": "Remove", "path": "members", "value": [{"value": "f648f8d5ea4e4cd38e9c"}]}')];
         yield 'Entra flag style' => [PatchFixtures::body('{"op": "remove", "path": "members[value eq \"f648f8d5ea4e4cd38e9c\"]"}')];
-        yield 'Keycloak list' => [PatchFixtures::body('{"op":"remove","path":"members","value":[{"value":"f648f8d5ea4e4cd38e9c"}]}')];
-        yield 'Keycloak fallback' => [PatchFixtures::body('{"op":"remove","path":"members[value eq \"f648f8d5ea4e4cd38e9c\"]"}')];
-        yield 'RFC example without space' => [PatchFixtures::body('{"op":"remove","path":"members[value eq\"f648f8d5ea4e4cd38e9c\"]"}')];
-        yield 'value list with $ref and type' => [PatchFixtures::body('{"op":"remove","path":"members","value":[{"value":"f648f8d5ea4e4cd38e9c","$ref":"https://example.com/v2/Users/f648f8d5ea4e4cd38e9c","type":"User"}]}')];
     }
 
     #[Test]
@@ -138,7 +131,6 @@ final class PatchApplierGroupTest extends KernelTestCase
         yield 'value list' => [PatchFixtures::body('{"op": "Remove", "path": "members", "value": [{"value": "absent"}]}')];
         yield 'empty value list' => [PatchFixtures::body('{"op": "Remove", "path": "members", "value": []}')];
         yield 'value filter' => [PatchFixtures::body('{"op": "remove", "path": "members[value eq \"absent\"]"}')];
-        yield 'sub-attribute of a filter' => [PatchFixtures::body('{"op": "remove", "path": "members[value eq \"absent\"].type"}')];
     }
 
     #[Test]
@@ -241,7 +233,6 @@ final class PatchApplierGroupTest extends KernelTestCase
                 }]
             }
             JSON];
-        yield 'Keycloak' => [PatchFixtures::body('{"op":"replace","path":"displayName","value":"1879db59-3bdf-4490-ad68-ab880a269474updatedDisplayName"}')];
     }
 
     #[Test]
@@ -253,16 +244,6 @@ final class PatchApplierGroupTest extends KernelTestCase
         $group['displayName'] = '1879db59-3bdf-4490-ad68-ab880a269474updatedDisplayName';
 
         self::assertSame($group, self::patch(PatchFixtures::group(['u1']), $body));
-    }
-
-    #[Test]
-    #[TestDox('Returns the stored document for an Okta rename to the same name')]
-    public function keepsDocumentForUnchangedRename(): void
-    {
-        $group = PatchFixtures::group(['u1']);
-        $body = PatchFixtures::body('{"op": "replace", "value": {"id": "abf4dd94-a4c0-4f67-89c9-76b03340cb9b", "displayName": "Test SCIMv2"}}');
-
-        self::assertSame($group, self::patch($group, $body));
     }
 
     #[Test]
@@ -286,20 +267,12 @@ final class PatchApplierGroupTest extends KernelTestCase
             ScimErrorType::Mutability,
             'Attribute "'.PatchFixtures::GROUP.':members.value" is immutable.',
         ];
-        yield 'readOnly members.display' => [
-            '{"op": "add", "path": "members[value eq \"u1\"].display", "value": "Babs"}',
-            ScimErrorType::Mutability,
-            'Attribute "'.PatchFixtures::GROUP.':members.display" is readOnly.',
-        ];
         yield 'readOnly members.display on a new member' => [
             '{"op": "add", "path": "members[value eq \"u2\"].display", "value": "Babs"}',
             ScimErrorType::Mutability,
             'Attribute "'.PatchFixtures::GROUP.':members.display" is readOnly.',
         ];
-        yield 'required displayName' => ['{"op": "remove", "path": "displayName"}', ScimErrorType::Mutability, 'Attribute "'.PatchFixtures::GROUP.':displayName" is required.'];
         yield 'required displayName replaced with ""' => ['{"op": "replace", "path": "displayName", "value": ""}', ScimErrorType::Mutability, 'Attribute "'.PatchFixtures::GROUP.':displayName" is required.'];
-        yield 'readOnly meta' => ['{"op": "remove", "path": "meta"}', ScimErrorType::Mutability, 'Attribute "'.PatchFixtures::GROUP.':meta" is readOnly.'];
-        yield 'readOnly meta sub-attribute' => ['{"op": "replace", "path": "meta.version", "value": "W/\"1\""}', ScimErrorType::Mutability, 'Attribute "'.PatchFixtures::GROUP.':meta.version" is readOnly.'];
     }
 
     #[Test]

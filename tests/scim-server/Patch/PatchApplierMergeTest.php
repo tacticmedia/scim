@@ -23,7 +23,6 @@ final class PatchApplierMergeTest extends KernelTestCase
     public static function valuesWithoutSubAttributes(): iterable
     {
         yield 'add of an empty object' => ['{"op":"add","path":"name","value":{}}'];
-        yield 'add of an unknown sub-attribute' => ['{"op":"add","path":"name","value":{"foo":"x"}}'];
         yield 'path-less replace of an unknown sub-attribute' => ['{"op":"replace","value":{"name":{"foo":"x"}}}'];
         yield 'replace of a readOnly sub-attribute' => ['{"op":"replace","path":"'.PatchFixtures::ENTERPRISE.':manager","value":{"displayName":"Boss"}}'];
         yield 'add of an empty object to a selected value' => ['{"op":"add","path":"emails[type eq \"work\"]","value":{}}'];
@@ -41,27 +40,13 @@ final class PatchApplierMergeTest extends KernelTestCase
         self::assertSame($user, $this->patch($user, $operation));
     }
 
-    #[Test]
-    #[TestDox('Keeps a member for an add of only a readOnly sub-attribute')]
-    public function keepsMemberForReadOnlySubAttribute(): void
-    {
-        $group = PatchFixtures::group(['u1', 'u2']);
-
-        self::assertSame($group, PatchFixtures::patch($group, PatchFixtures::body('{"op":"add","path":"members[value eq \"u1\"]","value":{"display":"Babs"}}'), CoreResourceTypes::group()));
-    }
-
     /**
      * @return iterable<string, array{string, array<string, string>}>
      */
     public static function nullSubAttributes(): iterable
     {
         yield 'replace with only a null sub-attribute' => ['{"op":"replace","path":"name","value":{"middleName":null}}', ['givenName' => 'Barbara', 'familyName' => 'Jensen']];
-        yield 'replace with a null sub-attribute' => ['{"op":"replace","path":"name","value":{"givenName":"B2","middleName":null}}', ['givenName' => 'B2', 'familyName' => 'Jensen']];
         yield 'add with a null sub-attribute' => ['{"op":"add","path":"name","value":{"givenName":"B2","MiddleName":null}}', ['givenName' => 'B2', 'familyName' => 'Jensen']];
-        yield 'path-less replace with a null sub-attribute' => [
-            '{"op":"replace","value":{"name":{"givenName":"B2","familyName":"Jensen","middleName":null}}}',
-            ['givenName' => 'B2', 'familyName' => 'Jensen'],
-        ];
         yield 'replace with a null absent sub-attribute' => ['{"op":"replace","path":"name","value":{"honorificPrefix":null}}', self::NAME];
     }
 

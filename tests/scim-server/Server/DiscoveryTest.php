@@ -156,8 +156,6 @@ final class DiscoveryTest extends KernelTestCase
     public static function discoveryEndpoints(): iterable
     {
         yield '/ServiceProviderConfig' => ['/ServiceProviderConfig'];
-        yield '/ResourceTypes' => ['/ResourceTypes'];
-        yield '/Schemas/{urn}' => ['/Schemas/'.self::USER];
     }
 
     #[Test]

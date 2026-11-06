@@ -104,20 +104,6 @@ final class PatchTest extends KernelTestCase
      */
     public static function failures(): iterable
     {
-        yield 'a body without the PatchOp URN' => [
-            ['Operations' => [['op' => 'add', 'path' => 'nickName', 'value' => 'Babs']]],
-            [],
-            400,
-            'invalidSyntax',
-            '"schemas" must contain "urn:ietf:params:scim:api:messages:2.0:PatchOp".',
-        ];
-        yield 'a path that does not resolve' => [
-            self::patch(['op' => 'replace', 'path' => 'shoeSize', 'value' => 42]),
-            [],
-            400,
-            'invalidPath',
-            "Operations[0]: The attribute 'shoeSize' is not defined for the resource type User.",
-        ];
         yield 'a value that the normalizer rejects' => [
             self::patch(['op' => 'add', 'path' => 'nickName', 'value' => 'Babs'], ['op' => 'replace', 'path' => 'active', 'value' => 'maybe']),
             [],

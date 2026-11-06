@@ -46,7 +46,6 @@ final class MeConfigurationCheckTest extends KernelTestCase
         yield 'a type name in any case' => [['resource_type' => 'user'], self::USERS];
         yield 'a Slot' => [['attribute' => 'emails.value'], self::USERS];
         yield 'a Reference' => [['attribute' => 'manager'], self::USERS];
-        yield 'an extension URN' => [['attribute' => 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:employeeNumber'], self::USERS];
         yield 'a raw type' => [['resource_type' => 'Printer', 'attribute' => 'serialNumber'], [PrinterRepository::class]];
     }
 

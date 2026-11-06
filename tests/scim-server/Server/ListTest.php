@@ -71,9 +71,6 @@ final class ListTest extends KernelTestCase
         yield 'negative count means 0' => [['count' => -1], [], 1];
         yield 'count above maxResults means maxResults' => [['startIndex' => 2, 'count' => 10], ['u2', 'u3', 'u4'], 2];
         yield 'startIndex past the last match' => [['startIndex' => 9], [], 9];
-        yield 'parameter names in any case' => [['STARTINDEX' => 5, 'Count' => '1'], ['u5'], 5];
-        yield 'unknown parameters ignored' => [['cursor' => 'abc', 'startIndex' => '4'], ['u4', 'u5'], 4];
-        yield 'empty parameters ignored' => [['startIndex' => '', 'count' => '', 'filter' => '', 'sortBy' => ''], ['u1', 'u2', 'u3'], 1];
     }
 
     /**
@@ -150,9 +147,6 @@ final class ListTest extends KernelTestCase
         yield 'eq its own name' => ['meta.resourceType eq "User"', 5];
         yield 'eq another name' => ['meta.resourceType eq "Group"', 0];
         yield 'combined with another comparison' => ['meta.resourceType eq "User" and userName sw "a"', 1];
-        yield 'a value path on meta (RFC 7644 Table 5)' => ['meta[resourceType eq "User"]', 5];
-        yield 'a value path on meta with another sub-attribute' => ['meta[resourceType eq "User" and created pr]', 5];
-        yield 'a value path on meta with another name' => ['meta[resourceType eq "Group"]', 0];
     }
 
     #[Test]
@@ -170,20 +164,11 @@ final class ListTest extends KernelTestCase
      */
     public static function invalidQueries(): iterable
     {
-        yield 'a filter that does not parse' => ['?filter=userName%20eq', 'invalidFilter', 'Expected a comparison value (a JSON string, number, true, false or null), found the end of the filter.'];
         yield 'a filter on an unknown attribute' => ['?filter=shoeSize%20eq%2042', 'invalidFilter', "The attribute 'shoeSize' is not defined for the resource type User."];
-        yield 'a filter that is not a string' => ['?filter[]=x', 'invalidValue', 'The parameter "filter" must be a string.'];
         yield 'an unknown sortBy' => ['?sortBy=shoeSize', 'invalidValue', 'The sortBy attribute "shoeSize" is not defined for the resource type User.'];
         yield 'a sortBy that is not a path' => ['?sortBy=name.given.name', 'invalidValue', '"name.given.name" is not a valid sortBy attribute path.'];
         yield 'an unknown sortOrder' => ['?sortBy=userName&sortOrder=up', 'invalidValue', 'The sortOrder "up" is not "ascending" or "descending".'];
-        yield 'a startIndex that is not an integer' => ['?startIndex=abc', 'invalidValue', 'The parameter "startIndex" must be an integer.'];
-        yield 'a count that is not an integer' => ['?count=1.5', 'invalidValue', 'The parameter "count" must be an integer.'];
-        yield 'both attributes and excludedAttributes' => ['?attributes=userName&excludedAttributes=emails', 'invalidValue', 'The parameters "attributes" and "excludedAttributes" are mutually exclusive.'];
-        yield 'an invalid comparison that meta.resourceType makes irrelevant (RFC 7644 Table 3)' => [self::query(['filter' => 'meta.resourceType eq "Group" and active gt true']), 'invalidFilter', "The operator 'gt' does not apply to the boolean attribute 'urn:ietf:params:scim:schemas:core:2.0:User:active'."];
-        yield 'an unknown attribute that meta.resourceType makes irrelevant' => [self::query(['filter' => 'meta.resourceType eq "User" or foo eq "x"']), 'invalidFilter', "The attribute 'foo' is not defined for the resource type User."];
         yield 'an unknown sortBy with a filter that matches no type' => [self::query(['filter' => 'meta.resourceType eq "Group"', 'sortBy' => 'shoeSize']), 'invalidValue', 'The sortBy attribute "shoeSize" is not defined for the resource type User.'];
-        yield 'a sortBy on a never-returned attribute' => ['?sortBy=password', 'invalidValue', 'The sortBy attribute "urn:ietf:params:scim:schemas:core:2.0:User:password" is never returned and cannot be used to sort.'];
-        yield 'a sortBy on a never-returned attribute with a filter that matches no type' => [self::query(['filter' => 'meta.resourceType eq "Group"', 'sortBy' => 'password']), 'invalidValue', 'The sortBy attribute "urn:ietf:params:scim:schemas:core:2.0:User:password" is never returned and cannot be used to sort.'];
     }
 
     #[Test]

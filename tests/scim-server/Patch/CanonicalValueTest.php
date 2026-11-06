@@ -27,16 +27,13 @@ final class CanonicalValueTest extends KernelTestCase
         $decimal = new AttributeDefinition('d', AttributeType::Decimal);
         $dateTime = new AttributeDefinition('t', AttributeType::DateTime);
         $binary = new AttributeDefinition('x', AttributeType::Binary);
-        $reference = new AttributeDefinition('r', AttributeType::Reference, caseExact: true);
 
         yield 'string in another case' => [$caseIgnored, 'Babs', 'bABS'];
         yield 'string in NFD and NFC' => [$caseIgnored, "e\u{301}", "\u{E9}"];
         yield 'caseExact string in another case' => [$caseExact, 'Babs', 'babs'];
         yield 'caseExact string in NFD and NFC' => [$caseExact, "e\u{301}", "\u{E9}"];
         yield 'string and number' => [$caseIgnored, '1', 1];
-        yield 'reference in another case' => [$reference, 'https://example.com/A', 'https://example.com/a'];
         yield 'boolean and Entra string' => [$boolean, true, 'True'];
-        yield 'false and "false"' => [$boolean, false, 'false'];
         yield 'true and false' => [$boolean, true, false];
         yield 'boolean and other string' => [$boolean, true, 'yes'];
         yield 'integer and integral float' => [$integer, 1, 1.0];

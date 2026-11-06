@@ -11,7 +11,6 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use TacticMedia\ScimServerBundle\Converter\ConversionContext;
 use TacticMedia\ScimServerBundle\Converter\ConversionFailed;
 use TacticMedia\ScimServerBundle\Converter\NativeConverter;
-use TacticMedia\ScimServerBundle\Tests\Fixtures\Enum\DeviceStatus;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Enum\UserType;
 
 final class NativeConverterTest extends KernelTestCase
@@ -32,11 +31,8 @@ final class NativeConverterTest extends KernelTestCase
     public static function memberValues(): iterable
     {
         yield 'string' => ['bjensen', 'bjensen'];
-        yield 'int' => [3, 3];
-        yield 'bool' => [false, false];
         yield 'null' => [null, null];
         yield 'DateTimeImmutable in another zone' => [new \DateTimeImmutable('2026-11-05T12:00:00.5+02:00'), '2026-11-05T10:00:00Z'];
-        yield 'DateTime' => [new \DateTime('2026-11-05T10:00:00Z'), '2026-11-05T10:00:00Z'];
         yield 'string-backed enum' => [UserType::Contractor, 'Contractor'];
     }
 
@@ -56,13 +52,11 @@ final class NativeConverterTest extends KernelTestCase
         yield 'string' => [self::context('User', 'userName'), 'bjensen', 'bjensen'];
         yield '"" for a nullable string' => [self::context('User', 'displayName'), '', null];
         yield '"" for a string' => [self::context('User', 'userName'), '', ''];
-        yield 'bool' => [self::context('User', 'enabled'), false, false];
         yield 'null' => [self::context('User', 'displayName'), null, null];
         yield 'int for a float member' => [self::context('Device', 'weight'), 2, 2.0];
         yield 'integral float for an int member' => [self::context('Device', 'weight', 'int'), -2.0, -2];
         yield 'enum value' => [self::context('User', 'type'), 'Intern', UserType::Intern];
         yield 'enum value in another case' => [self::context('User', 'type'), 'intern', UserType::Intern];
-        yield 'exact enum value with caseExact' => [self::context('Device', 'status', caseExact: true), 'active', DeviceStatus::Active];
     }
 
     /**

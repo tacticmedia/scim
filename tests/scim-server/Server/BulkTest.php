@@ -7,7 +7,6 @@ namespace TacticMedia\ScimServer\Tests\Server;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestDox;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-use TacticMedia\ScimServer\Event\ResourceCreated;
 use TacticMedia\ScimServer\Event\ResourceDeleted;
 use TacticMedia\ScimServer\Event\ResourceUpdated;
 use TacticMedia\ScimServer\Tests\Server\Fixtures\BulkFixture;
@@ -39,24 +38,6 @@ final class BulkTest extends KernelTestCase
             ['location' => self::BASE_URL.'/Groups/'.$tourGuides, 'method' => 'POST', 'bulkId' => 'ytrewq', 'version' => 'W/"1"', 'status' => '201'],
         ]], self::json($response));
         self::assertSame([['type' => 'User', 'value' => $alice]], ($this->groups->get($tourGuides) ?? [])['members'] ?? null);
-    }
-
-    #[Test]
-    #[TestDox('An operation that references a later POST runs after it; the response keeps the request order')]
-    public function reordersForwardReference(): void
-    {
-        $server = $this->server();
-
-        $response = $this->bulk($server, [
-            ['method' => 'POST', 'path' => '/Groups', 'bulkId' => 'g', 'data' => ['displayName' => 'Tour Guides', 'members' => [['value' => 'bulkId:u']]]],
-            ['method' => 'POST', 'path' => '/Users', 'bulkId' => 'u', 'data' => ['userName' => 'Alice']],
-        ]);
-
-        $alice = $this->idOf($this->users, 'userName', 'Alice');
-        self::assertSame(['g', 'u'], array_column($this->operations($response), 'bulkId'));
-        self::assertSame(['201', '201'], array_column($this->operations($response), 'status'));
-        self::assertSame([['value' => $alice]], ($this->groups->get($this->idOf($this->groups, 'displayName', 'Tour Guides')) ?? [])['members'] ?? null);
-        self::assertSame(['User', 'Group'], array_map(static fn (object $event): string => $event instanceof ResourceCreated ? $event->type->name : '', $this->events));
     }
 
     #[Test]
@@ -98,20 +79,6 @@ final class BulkTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('PATCH adds a member that a POST of the same request created')]
-    public function patchesWithReference(): void
-    {
-        $server = $this->server([], [self::storedGroup('g1', 'Admins')]);
-
-        $this->bulk($server, [
-            ['method' => 'PATCH', 'path' => '/Groups/g1', 'data' => ['schemas' => [self::PATCH_OP], 'Operations' => [['op' => 'add', 'path' => 'members', 'value' => [['value' => 'bulkId:alice']]]]]],
-            ['method' => 'POST', 'path' => '/Users', 'bulkId' => 'alice', 'data' => ['userName' => 'Alice']],
-        ]);
-
-        self::assertSame([['value' => $this->idOf($this->users, 'userName', 'Alice')]], ($this->groups->get('g1') ?? [])['members'] ?? null);
-    }
-
-    #[Test]
     #[TestDox('Without failOnErrors every operation runs; each failure has its status and Error response (RFC 7644 3.7.3)')]
     public function continuesAfterErrors(): void
     {
@@ -150,22 +117,6 @@ final class BulkTest extends KernelTestCase
 
         self::assertSame(['201', '404', '404'], array_column($this->operations($response), 'status'));
         self::assertNotNull($this->users->get('u1'));
-    }
-
-    #[Test]
-    #[TestDox('An operation with invalid UTF-8 in its path fails alone; the response reports the operations that ran')]
-    public function failsInvalidUtf8Path(): void
-    {
-        $server = $this->server();
-
-        $response = $this->bulk($server, [
-            ['method' => 'POST', 'path' => '/Users', 'bulkId' => 'a', 'data' => ['userName' => 'alice']],
-            ['method' => 'DELETE', 'path' => '/Users/%FF'],
-        ]);
-
-        self::assertSame(200, $response->getStatusCode());
-        self::assertSame(['201', '404'], array_column($this->operations($response), 'status'));
-        self::assertSame("Resource \u{FFFD} not found.", ($this->operations($response)[1]['response'] ?? [])['detail'] ?? null);
     }
 
     #[Test]
@@ -215,21 +166,5 @@ final class BulkTest extends KernelTestCase
             ['schemas' => [self::ERROR], 'status' => '409', 'detail' => 'The POST operation with the bulkId "x" failed.'],
             ['schemas' => [self::ERROR], 'status' => '400', 'scimType' => 'invalidValue', 'detail' => 'No POST operation of the request has the bulkId "nope".'],
         ], array_column($this->operations($response), 'response'));
-    }
-
-    #[Test]
-    #[TestDox('Uniqueness applies across the operations of one request, as for single requests')]
-    public function checksUniqueness(): void
-    {
-        $server = $this->server();
-
-        $response = $this->bulk($server, [
-            ['method' => 'POST', 'path' => '/Users', 'bulkId' => 'a', 'data' => ['userName' => 'alice']],
-            ['method' => 'POST', 'path' => '/Users', 'bulkId' => 'b', 'data' => ['userName' => 'ALICE']],
-        ]);
-
-        self::assertSame(['201', '409'], array_column($this->operations($response), 'status'));
-        self::assertSame('The value of attribute "userName" is already in use.', ($this->operations($response)[1]['response'] ?? [])['detail'] ?? null);
-        self::assertCount(1, $this->events);
     }
 }

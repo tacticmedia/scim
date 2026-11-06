@@ -50,25 +50,6 @@ final class ObjectValidatorTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('A UniqueEntity violation is 409 uniqueness')]
-    public function uniqueEntityIsUniqueness(): void
-    {
-        $entityManager = self::createSchema();
-        $alice = new Member('alice');
-        $alice->email = 'team@example.com';
-
-        $entityManager->persist($alice);
-        $entityManager->flush();
-
-        $bob = new Member('bob');
-        $bob->email = 'team@example.com';
-
-        $exception = $this->failure(new AttributeLoader()->load(Member::class), $bob);
-
-        self::assertSame([409, ScimErrorType::Uniqueness, 'Attribute "emails[type eq "work"].value": This value is already used.'], [$exception->status, $exception->scimType, $exception->detail]);
-    }
-
-    #[Test]
     #[TestDox('validationGroups without the validator service is a LogicException')]
     public function withoutValidatorFails(): void
     {

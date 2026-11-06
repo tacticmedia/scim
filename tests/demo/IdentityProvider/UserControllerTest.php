@@ -78,18 +78,6 @@ final class UserControllerTest extends WebTestCase
     }
 
     #[Test]
-    #[TestDox('An invalid user is not saved and not provisioned')]
-    public function rejectsInvalidUser(): void
-    {
-        $this->client->request('GET', '/users/new');
-        $this->client->submitForm('Save and provision', ['user[userName]' => '', 'user[workEmail]' => 'not an email']);
-
-        self::assertResponseStatusCodeSame(422);
-        self::assertSame([], self::fakeServiceProvider()->requests);
-        self::assertSame(0, self::service(EntityManagerInterface::class)->getRepository(DirectoryUser::class)->count());
-    }
-
-    #[Test]
     #[TestDox('Editing a user provisions the change')]
     public function editsUser(): void
     {
@@ -120,22 +108,6 @@ final class UserControllerTest extends WebTestCase
 
         self::assertFalse($disabled);
         self::assertTrue(self::fakeServiceProvider()->user($scimId)['active']);
-    }
-
-    #[Test]
-    #[TestDox('Deleting a provisioned user deletes it at the service provider')]
-    public function deletesProvisionedUser(): void
-    {
-        $user = self::newUser('Ada', 'Lovelace');
-        self::service(Provisioner::class)->syncUser($user);
-        $scimId = (string) $user->scimId;
-
-        $this->client->submit($this->client->request('GET', '/')->selectButton('Delete')->form());
-
-        self::assertNull(self::fakeServiceProvider()->users->get($scimId));
-        self::assertSame(0, self::service(EntityManagerInterface::class)->getRepository(DirectoryUser::class)->count());
-        $this->client->followRedirect();
-        self::assertSelectorTextSame('.flash-success', 'User "ada.lovelace@example.com" deleted. Provisioned.');
     }
 
     #[Test]

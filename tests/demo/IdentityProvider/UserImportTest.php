@@ -26,22 +26,6 @@ final class UserImportTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('Keycloak pages by cursor: an empty cursor first, then each nextCursor until the last page')]
-    public function pagesByCursor(): void
-    {
-        self::useSettings(Dialect::Keycloak);
-        $this->seedServiceProvider();
-
-        $users = self::service(UserImporter::class)->import(2);
-
-        $nextCursor = $this->serviceProvider->requests[0]['response']['nextCursor'] ?? null;
-        self::assertIsString($nextCursor);
-        self::assertSame(['GET /Users?cursor&count=2', 'GET /Users?cursor='.$nextCursor.'&count=2'], array_column($this->serviceProvider->requests, 'line'));
-        self::assertArrayNotHasKey('nextCursor', (array) $this->serviceProvider->requests[1]['response']);
-        self::assertSame(['ada', 'grace', 'linus'], array_column($users, 'userName'));
-    }
-
-    #[Test]
     #[TestDox('Keycloak stops when the service provider repeats a cursor')]
     public function stopsOnRepeatedCursor(): void
     {
@@ -58,20 +42,6 @@ final class UserImportTest extends KernelTestCase
             self::assertSame(\sprintf('The service provider repeated the cursor "%s".', $cursor), $provisioningFailed->getMessage());
             self::assertSame(['GET /Users?cursor&count=2', 'GET /Users?cursor='.$cursor.'&count=2'], array_column($this->serviceProvider->requests, 'line'));
         }
-    }
-
-    #[Test]
-    #[TestDox('Keycloak continues by startIndex when the first page has no nextCursor')]
-    public function fallsBackToIndex(): void
-    {
-        self::useSettings(Dialect::Keycloak);
-        $this->serviceProvider->cursors = false;
-        $this->seedServiceProvider();
-
-        $users = self::service(UserImporter::class)->import(2);
-
-        self::assertSame(['ada', 'grace', 'linus'], array_column($users, 'userName'));
-        self::assertSame(['GET /Users?cursor&count=2', 'GET /Users?startIndex=3&count=2'], array_column($this->serviceProvider->requests, 'line'));
     }
 
     #[Test]

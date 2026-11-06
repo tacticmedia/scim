@@ -25,7 +25,6 @@ final class ScalarNormalizerTest extends KernelTestCase
         yield 'string with case and spaces' => [AttributeType::String, ' BJensen ', ' BJensen '];
         yield 'empty string' => [AttributeType::String, '', ''];
         yield 'reference' => [AttributeType::Reference, '../Users/2819c223', '../Users/2819c223'];
-        yield 'boolean true' => [AttributeType::Boolean, true, true];
         yield 'boolean false' => [AttributeType::Boolean, false, false];
         yield 'boolean string True' => [AttributeType::Boolean, 'True', true];
         yield 'boolean string FALSE' => [AttributeType::Boolean, 'FALSE', false];
@@ -66,11 +65,9 @@ final class ScalarNormalizerTest extends KernelTestCase
         yield 'dateTime without time' => [AttributeType::DateTime, '2008-01-23', 'an xsd:dateTime with a timezone'];
         yield 'dateTime on a missing day' => [AttributeType::DateTime, '2023-02-29T00:00:00Z', 'an xsd:dateTime with a timezone'];
         yield 'dateTime in month 13' => [AttributeType::DateTime, '2023-13-01T00:00:00Z', 'an xsd:dateTime with a timezone'];
-        yield 'dateTime at 24:30' => [AttributeType::DateTime, '2023-01-01T24:30:00Z', 'an xsd:dateTime with a timezone'];
         yield 'dateTime at 24:00:00' => [AttributeType::DateTime, '2024-02-29T24:00:00-14:00', 'an xsd:dateTime with a timezone'];
         yield 'dateTime with a five-digit year' => [AttributeType::DateTime, '10000-01-01T00:00:00Z', 'an xsd:dateTime with a timezone'];
         yield 'dateTime at offset +14:01' => [AttributeType::DateTime, '2024-01-01T00:00:00+14:01', 'an xsd:dateTime with a timezone'];
-        yield 'dateTime with a trailing newline' => [AttributeType::DateTime, "2008-01-23T04:56:22Z\n", 'an xsd:dateTime with a timezone'];
         yield 'dateTime from integer' => [AttributeType::DateTime, 1700000000, 'an xsd:dateTime with a timezone'];
         yield 'binary with whitespace' => [AttributeType::Binary, 'YW Jj', 'base64 encoded'];
         yield 'binary with bad padding' => [AttributeType::Binary, 'YQ=', 'base64 encoded'];

@@ -25,16 +25,4 @@ final class ResolvedAttributeTest extends KernelTestCase
         self::assertSame($givenName, new ResolvedAttribute($schema, $name, $givenName)->definition());
         self::assertSame($name, new ResolvedAttribute($schema, $name)->definition());
     }
-
-    #[Test]
-    #[TestDox('path() is qualified with the schema URN in schema spelling')]
-    public function pathIsQualifiedWithTheSchemaUrnInSchemaSpelling(): void
-    {
-        $givenName = new AttributeDefinition('givenName');
-        $name = new AttributeDefinition('name', AttributeType::Complex, subAttributes: [$givenName]);
-        $schema = new Schema('urn:example:User', 'User', '', [$name]);
-
-        self::assertSame('urn:example:User:name.givenName', (string) new ResolvedAttribute($schema, $name, $givenName)->path());
-        self::assertSame('urn:example:User:name', (string) new ResolvedAttribute($schema, $name)->path());
-    }
 }

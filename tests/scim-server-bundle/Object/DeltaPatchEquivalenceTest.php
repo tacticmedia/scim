@@ -31,7 +31,7 @@ final class DeltaPatchEquivalenceTest extends KernelTestCase
     use DeltaServer;
 
     /**
-     * @return iterable<string, array{list<array<string, mixed>>, bool, 2?: array<string, string>}>
+     * @return iterable<string, array{list<array<string, mixed>>, bool}>
      */
     public static function requests(): iterable
     {
@@ -47,16 +47,15 @@ final class DeltaPatchEquivalenceTest extends KernelTestCase
 
     /**
      * @param list<array<string, mixed>> $operations
-     * @param array<string, string>      $headers
      */
     #[Test]
     #[DataProvider('requests')]
     #[TestDox('$_dataName gives the same result on both paths')]
-    public function givesSameResult(array $operations, bool $viaDelta, array $headers = []): void
+    public function givesSameResult(array $operations, bool $viaDelta): void
     {
-        $full = $this->outcome(self::decoratedGroups(), $operations, $headers);
+        $full = $this->outcome(self::decoratedGroups(), $operations);
         $this->events = [];
-        $delta = $this->outcome(self::deltaGroups(), $operations, $headers);
+        $delta = $this->outcome(self::deltaGroups(), $operations);
 
         self::assertSame($full, $delta);
         self::assertNotContains($viaDelta ? ResourceUpdated::class : ResourcePatched::class, $this->events);
@@ -64,14 +63,13 @@ final class DeltaPatchEquivalenceTest extends KernelTestCase
 
     /**
      * @param list<array<string, mixed>> $operations
-     * @param array<string, string>      $headers
      *
      * @return array{int, mixed, mixed} the status and the body of the PATCH, and the stored group without
      *                                  meta.version, with the placeholders in place of the ids. The full path writes
      *                                  "remove then add of the same member" through replace(), which increments the
      *                                  version; the delta path changes nothing.
      */
-    private function outcome(ResourceRepository $groups, array $operations, array $headers): array
+    private function outcome(ResourceRepository $groups, array $operations): array
     {
         $clock = new MockClock('2026-11-06 10:00:00', 'UTC');
         Clock::set($clock);
@@ -79,7 +77,7 @@ final class DeltaPatchEquivalenceTest extends KernelTestCase
         $clock->sleep(60);
         $server = $this->serverOf($groups);
 
-        $patch = self::request($server, 'PATCH', '/Groups/'.$ids['g1'], $this->translated(['schemas' => ['urn:ietf:params:scim:api:messages:2.0:PatchOp'], 'Operations' => $operations], $ids), $headers);
+        $patch = self::request($server, 'PATCH', '/Groups/'.$ids['g1'], $this->translated(['schemas' => ['urn:ietf:params:scim:api:messages:2.0:PatchOp'], 'Operations' => $operations], $ids));
         $stored = json_decode((string) self::request($server, 'GET', '/Groups/'.$ids['g1'])->getContent(), true, flags: \JSON_THROW_ON_ERROR);
         self::assertIsArray($stored);
         self::assertIsArray($stored['meta']);

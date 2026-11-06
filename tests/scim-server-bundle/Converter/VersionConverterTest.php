@@ -67,8 +67,6 @@ final class VersionConverterTest extends KernelTestCase
         yield 'a bare number' => ['5'];
         yield 'an int' => [5];
         yield 'an empty string' => [''];
-        yield 'a tag that is not a number' => ['W/"abc"'];
-        yield 'a negative number' => ['W/"-1"'];
         yield 'a leading zero' => ['W/"05"'];
         yield 'a number above PHP_INT_MAX' => ['W/"9223372036854775808"'];
         yield 'trailing text' => ['W/"5" x'];

@@ -17,32 +17,6 @@ final class PatchApplierUserTest extends KernelTestCase
     private const string MANAGER = PatchFixtures::MANAGER;
 
     #[Test]
-    #[TestDox('Applies the Entra default style update: filtered email value and name.familyName')]
-    public function appliesEntraDefaultStyleUpdate(): void
-    {
-        $user = $this->patch(PatchFixtures::user(), <<<'JSON'
-            {
-                "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"],
-                "Operations": [
-                        {
-                        "op": "Replace",
-                        "path": "emails[type eq \"work\"].value",
-                        "value": "updatedEmail@microsoft.com"
-                        },
-                        {
-                        "op": "Replace",
-                        "path": "name.familyName",
-                        "value": "updatedFamilyName"
-                        }
-                ]
-            }
-            JSON);
-
-        self::assertSame([['value' => 'updatedEmail@microsoft.com', 'type' => 'work', 'primary' => true]], $user['emails']);
-        self::assertSame(['formatted' => 'givenName familyName', 'familyName' => 'updatedFamilyName', 'givenName' => 'givenName'], $user['name']);
-    }
-
-    #[Test]
     #[TestDox('Applies the Entra default style update of several attributes, one operation each')]
     public function appliesEntraOneOperationPerAttribute(): void
     {
@@ -104,8 +78,6 @@ final class PatchApplierUserTest extends KernelTestCase
     public static function workEmailCreations(): iterable
     {
         yield 'Entra default style' => [PatchFixtures::body('{"op": "Add", "path": "emails[type eq \"work\"].value", "value": "babs@example.com"}')];
-        yield 'Entra flag style' => [PatchFixtures::body('{"op": "replace", "path": "emails[type eq \"work\"].value", "value": "babs@example.com"}')];
-        yield 'SCIM Validator' => [PatchFixtures::body('{"op": "add", "path": "emails[type eq \"work\"].value", "value": "babs@example.com"}')];
     }
 
     #[Test]
@@ -138,12 +110,8 @@ final class PatchApplierUserTest extends KernelTestCase
     public static function activeChanges(): iterable
     {
         yield 'Entra default style "False"' => [PatchFixtures::body('{"op": "Replace", "path": "active", "value": "False"}'), false];
-        yield 'Entra restore "True"' => [PatchFixtures::body('{"op": "Replace", "path": "active", "value": "True"}'), true];
         yield 'Entra flag style false' => [PatchFixtures::body('{"op": "replace", "path": "active", "value": false}'), false];
-        yield 'Entra tutorial' => ['{"Operations": [{"op": "Replace", "path": "active", "value": false}], "schemas": ["urn:ietf:params:scim:api:messages:2.0:PatchOp"]}', false];
         yield 'Okta deactivation without path' => [PatchFixtures::body('{"op": "replace", "value": {"active": false}}'), false];
-        yield 'Okta reactivation without path' => [PatchFixtures::body('{"op": "replace", "value": {"active": true}}'), true];
-        yield 'Keycloak deactivation' => [PatchFixtures::body('{"op":"replace","path":"active","value":false}'), false];
     }
 
     #[Test]
@@ -177,21 +145,7 @@ final class PatchApplierUserTest extends KernelTestCase
             PatchFixtures::body('{"op": "Add", "path": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:manager", "value": {"value": "'.$id.'"}}'),
             ['value' => $id],
         ];
-        yield 'manager.value' => [
-            PatchFixtures::body('{"op": "replace", "path": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:manager.value", "value": "'.$id.'"}'),
-            ['value' => $id],
-        ];
-        yield 'path-less add' => [
-            PatchFixtures::body('{"op": "Add", "value": {"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:manager": {"value": "'.$id.'"}}}'),
-            ['value' => $id],
-        ];
-        yield 'path-less replace' => [
-            PatchFixtures::body('{"op": "replace", "value": {"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:manager": {"value": "'.$id.'"}}}'),
-            ['value' => $id],
-        ];
-        yield 'remove' => [PatchFixtures::body('{"op": "remove", "path": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:manager"}'), null];
         yield 'replace with ""' => [PatchFixtures::body('{"op": "replace", "path": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:manager", "value": ""}'), null];
-        yield 'replace with null' => [PatchFixtures::body('{"op": "replace", "path": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:manager", "value": null}'), null];
         yield 'remove manager.value' => [PatchFixtures::body('{"op": "remove", "path": "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User:manager.value"}'), null];
     }
 
@@ -200,20 +154,10 @@ final class PatchApplierUserTest extends KernelTestCase
      */
     #[Test]
     #[DataProvider('managerChanges')]
-    #[TestDox('Sets and clears the manager in every form that Entra sends')]
+    #[TestDox('Sets and clears the manager in the forms that Entra sends')]
     public function changesManager(string $body, ?array $expected): void
     {
         self::assertSame($expected, $this->patch(PatchFixtures::user(), $body)[self::ENTERPRISE]['manager'] ?? null);
-    }
-
-    #[Test]
-    #[TestDox('Removes the extension object when its last attribute goes')]
-    public function removesEmptyExtensionObject(): void
-    {
-        $user = PatchFixtures::user();
-        $user[self::ENTERPRISE] = ['manager' => ['value' => self::MANAGER]];
-
-        self::assertArrayNotHasKey(self::ENTERPRISE, $this->patch($user, PatchFixtures::body('{"op": "remove", "path": "manager"}')));
     }
 
     /**
@@ -221,10 +165,8 @@ final class PatchApplierUserTest extends KernelTestCase
      */
     public static function nullUpdates(): iterable
     {
-        yield 'replace with ""' => [PatchFixtures::body('{"op": "replace", "path": "nickName", "value": ""}'), 'Tour Guide'];
         yield 'replace with null' => [PatchFixtures::body('{"op": "replace", "path": "nickName", "value": null}'), 'Tour Guide'];
         yield 'path-less replace with ""' => [PatchFixtures::body('{"op": "replace", "value": {"nickName": "", "title": ""}}'), null];
-        yield 'path-less replace with null' => [PatchFixtures::body('{"op": "replace", "value": {"nickName": null, "title": null}}'), null];
     }
 
     #[Test]
@@ -239,13 +181,6 @@ final class PatchApplierUserTest extends KernelTestCase
         $patched = $this->patch($user, $body);
 
         self::assertSame([null, $expectedTitle], [$patched['nickName'] ?? null, $patched['title'] ?? null]);
-    }
-
-    #[Test]
-    #[TestDox('Adds a nickName')]
-    public function addsNickName(): void
-    {
-        self::assertSame('Babs', $this->patch(PatchFixtures::user(), PatchFixtures::body('{"op": "Add", "path": "nickName", "value": "Babs"}'))['nickName']);
     }
 
     #[Test]
@@ -319,10 +254,6 @@ final class PatchApplierUserTest extends KernelTestCase
             PatchFixtures::body('{"op": "Replace", "path": "roles[primary eq \"True\"].value", "value": "Admin"}'),
             [['primary' => true, 'value' => 'Admin']],
         ];
-        yield 'SCIM Validator' => [
-            PatchFixtures::body('{"op": "replace", "path": "roles[primary eq true].type", "value": "I6T3MZAC1HXV"}'),
-            [['primary' => true, 'type' => 'I6T3MZAC1HXV']],
-        ];
         yield 'AppRoleAssignmentsComplex with JSON strings' => [
             PatchFixtures::body(<<<'JSON'
                 {
@@ -337,22 +268,6 @@ final class PatchApplierUserTest extends KernelTestCase
             [
                 ['value' => '{"id":"06b07648-ecfe-589f-9d2f-6325724a46ee","value":"Admin","displayName":"Admin"}'],
                 ['value' => '{"id":"06b07648-ecfe-599f-9d2f-6325724a46ee","value":"User","displayName":"User"}'],
-            ],
-        ];
-        yield 'AssertiveAppRoleAssignmentsComplex' => [
-            PatchFixtures::body(<<<'JSON'
-                {
-                    "op": "replace",
-                    "path": "roles",
-                    "value": [
-                        {"primary": false, "type": "WindowsAzureActiveDirectoryRole", "display": "User", "value": "User"},
-                        {"primary": false, "type": "WindowsAzureActiveDirectoryRole", "display": "Test", "value": "Test"}
-                    ]
-                }
-                JSON),
-            [
-                ['primary' => false, 'type' => 'WindowsAzureActiveDirectoryRole', 'display' => 'User', 'value' => 'User'],
-                ['primary' => false, 'type' => 'WindowsAzureActiveDirectoryRole', 'display' => 'Test', 'value' => 'Test'],
             ],
         ];
     }

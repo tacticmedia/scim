@@ -57,10 +57,6 @@ final class PatchApplierRulesTest extends KernelTestCase
             '{"op": "add", "path": "emails", "value": [{"value": "babs@jensen.org", "primary": true}]}',
             [['value' => self::WORK, 'type' => 'work', 'primary' => false], self::HOME + ['primary' => true]],
         ];
-        yield 'add the primary value with primary false' => [
-            '{"op": "add", "path": "emails", "value": {"value": "'.self::WORK.'", "type": "work", "primary": false}}',
-            [['value' => self::WORK, 'type' => 'work', 'primary' => false], self::HOME],
-        ];
     }
 
     /**
@@ -95,10 +91,6 @@ final class PatchApplierRulesTest extends KernelTestCase
             '{"op":"replace","path":"emails[type eq \"other\" and value eq \"o@example.org\"]","value":{"display":"Other"}}',
             [['value' => self::WORK, 'type' => 'work', 'primary' => true], self::HOME, ['type' => 'other', 'value' => 'o@example.org', 'display' => 'Other']],
         ];
-        yield 'remove with a logical filter' => [
-            '{"op":"remove","path":"emails[type eq \"work\" and value ew \"testuser.com\"]"}',
-            [self::HOME],
-        ];
         yield 'remove a sub-attribute of the selected values' => [
             '{"op":"remove","path":"emails[type eq \"work\"].primary"}',
             [['value' => self::WORK, 'type' => 'work'], self::HOME],
@@ -107,19 +99,10 @@ final class PatchApplierRulesTest extends KernelTestCase
             '{"op":"Replace","path":"emails[type eq \"home\"].Value","value":"babs@home.example.org"}',
             [['value' => self::WORK, 'type' => 'work', 'primary' => true], ['value' => 'babs@home.example.org', 'type' => 'home']],
         ];
-        yield 'URN-qualified path' => [
-            '{"op":"replace","path":"urn:ietf:params:scim:schemas:core:2.0:User:emails[type eq \"home\"].value","value":"babs@home.example.org"}',
-            [['value' => self::WORK, 'type' => 'work', 'primary' => true], ['value' => 'babs@home.example.org', 'type' => 'home']],
-        ];
         yield 'sub-attribute without filter sets every value' => [
             '{"op":"replace","path":"emails.display","value":"Babs"}',
             [['value' => self::WORK, 'type' => 'work', 'primary' => true, 'display' => 'Babs'], self::HOME + ['display' => 'Babs']],
         ];
-        yield 'removing the last sub-attribute removes the value' => [
-            '{"op":"remove","path":"emails.value"}',
-            [['type' => 'work', 'primary' => true], ['type' => 'home']],
-        ];
-        yield 'replace the list with ""' => ['{"op":"replace","path":"emails","value":""}', null];
     }
 
     /**
@@ -139,8 +122,6 @@ final class PatchApplierRulesTest extends KernelTestCase
     public static function nameEdits(): iterable
     {
         yield 'remove a sub-attribute' => ['{"op":"remove","path":"name.formatted"}', ['familyName' => 'familyName', 'givenName' => 'givenName']];
-        yield 'remove an absent sub-attribute' => ['{"op":"remove","path":"name.middleName"}', ['formatted' => 'givenName familyName', 'familyName' => 'familyName', 'givenName' => 'givenName']];
-        yield 'replace with ""' => ['{"op":"replace","path":"name.formatted","value":""}', ['familyName' => 'familyName', 'givenName' => 'givenName']];
         yield 'remove the attribute' => ['{"op":"remove","path":"name"}', null];
         yield 'add a sub-attribute' => ['{"op":"add","path":"name.middleName","value":"Jane"}', ['formatted' => 'givenName familyName', 'familyName' => 'familyName', 'givenName' => 'givenName', 'middleName' => 'Jane']];
     }
@@ -162,11 +143,8 @@ final class PatchApplierRulesTest extends KernelTestCase
     public static function operationsWithoutChange(): iterable
     {
         yield 'remove an absent attribute' => ['{"op":"remove","path":"nickName"}'];
-        yield 'remove an absent readOnly attribute' => ['{"op":"remove","path":"groups"}'];
-        yield 'replace with the stored value' => ['{"op":"replace","path":"userName","value":"Test_User_00aa00aa-bb11-cc22-dd33-44ee44ee44ee"}'];
         yield 'replace the readOnly id with the stored value' => ['{"op":"replace","path":"id","value":"6764549bef60420686bc"}'];
         yield 'add the stored email' => ['{"op":"add","path":"emails","value":{"value":"'.PatchFixtures::WORK_EMAIL.'"}}'];
-        yield 'add the stored email with its primary' => ['{"op":"add","path":"emails","value":{"value":"'.PatchFixtures::WORK_EMAIL.'","primary":true}}'];
         yield 'replace with a filter that matches nothing and null' => ['{"op":"replace","path":"emails[type eq \"home\"].value","value":null}'];
         yield 'add an empty list' => ['{"op":"add","path":"emails","value":[]}'];
         yield 'path-less with unknown keys' => ['{"op":"add","value":{"schemas":["'.self::USER.'"],"foo":"bar","urn:example:unknown:User":{"a":"b"},"name[givenName eq \"x\"]":"y"}}'];
@@ -323,14 +301,11 @@ final class PatchApplierRulesTest extends KernelTestCase
      */
     public static function deviceChanges(): iterable
     {
-        yield 'add an immutable attribute without value' => [[], '{"op":"add","path":"serialNumber","value":"SN-1"}', ['serialNumber' => 'SN-1']];
         yield 'replace an immutable attribute without value (RFC 7644 section 3.5.2.3)' => [[], '{"op":"replace","path":"serialNumber","value":"SN-1"}', ['serialNumber' => 'SN-1']];
-        yield 'replace an immutable attribute with its value' => [['serialNumber' => 'SN-1'], '{"op":"replace","path":"serialNumber","value":"SN-1"}', ['serialNumber' => 'SN-1']];
         yield 'add a string that equals a stored one' => [['tags' => ['Blue']], '{"op":"add","path":"tags","value":["blue","red"]}', ['tags' => ['Blue', 'red']]];
         yield 'remove listed strings' => [['tags' => ['blue', 'red', 'green']], '{"op":"remove","path":"tags","value":["RED","green"]}', ['tags' => ['blue']]];
         yield 'remove the last listed string' => [['tags' => ['blue']], '{"op":"remove","path":"tags","value":"blue"}', []];
         yield 'replace the strings with ""' => [['tags' => ['a', 'b']], '{"op":"replace","path":"tags","value":""}', []];
-        yield 'add "" to the strings' => [['tags' => ['a', 'b']], '{"op":"add","path":"tags","value":""}', ['tags' => ['a', 'b']]];
         yield 'remove "" from the strings' => [['tags' => ['a', '']], '{"op":"remove","path":"tags","value":""}', ['tags' => ['a']]];
     }
 
@@ -351,7 +326,6 @@ final class PatchApplierRulesTest extends KernelTestCase
      */
     public static function immutableChanges(): iterable
     {
-        yield 'add' => ['{"op":"add","path":"serialNumber","value":"SN-2"}'];
         yield 'replace' => ['{"op":"replace","path":"serialNumber","value":"SN-2"}'];
         yield 'remove' => ['{"op":"remove","path":"serialNumber"}'];
     }

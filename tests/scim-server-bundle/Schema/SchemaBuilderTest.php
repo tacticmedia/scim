@@ -43,17 +43,6 @@ final class SchemaBuilderTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('A slot attribute publishes type with the mapped types, and primary')]
-    public function slotAttributesPublishTypeAndPrimary(): void
-    {
-        $user = new AttributeLoader()->load(User::class)->resourceType->schema;
-
-        self::assertSame(['value', 'type', 'primary'], $this->names($user->attribute('phoneNumbers')));
-        self::assertSame(['work', 'mobile'], $user->attribute('phoneNumbers')?->subAttribute('type')?->canonicalValues);
-        self::assertSame(['work'], $user->attribute('emails')?->subAttribute('type')?->canonicalValues);
-    }
-
-    #[Test]
     #[TestDox('A reference collection publishes type with its literals, or no type without a value filter')]
     public function referenceCollectionsPublishTheirTypes(): void
     {

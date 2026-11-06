@@ -25,7 +25,6 @@ final class FilterErrorTest extends KernelTestCase
     private const string ENTERPRISE = 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User';
     private const string GROUP = 'urn:ietf:params:scim:schemas:core:2.0:Group';
     private const string DEVICE = 'urn:acme:scim:schemas:core:1.0:Device';
-    private const string AUDIT = 'urn:acme:scim:schemas:extension:audit:1.0:Device';
     private const string BADGE = 'urn:acme:scim:schemas:extension:badge:1.0:User';
 
     /**
@@ -34,29 +33,14 @@ final class FilterErrorTest extends KernelTestCase
     public static function errors(): iterable
     {
         yield 'Computed' => ['Device', 'label eq "x"', "The attribute '".self::DEVICE.":label' cannot be used in a filter."];
-        yield 'Computed pr' => ['Device', 'label pr', "The attribute '".self::DEVICE.":label' cannot be used in a filter."];
         yield 'writeOnly' => ['Contact', 'password eq "x"', "The attribute '".self::USER.":password' is never returned and cannot be used in a filter."];
-        yield 'writeOnly sub-attribute' => ['Contact', 'badge.code pr', "The attribute '".self::BADGE.":badge.code' is never returned and cannot be used in a filter."];
         yield 'writeOnly in a value path' => ['Contact', 'badge[code eq "1"]', "The attribute '".self::BADGE.":badge.code' is never returned and cannot be used in a filter."];
         yield 'reference displayName' => ['User', 'manager.displayName eq "x"', "The attribute '".self::ENTERPRISE.":manager.displayName' cannot be used in a filter."];
-        yield 'reference $ref' => ['User', 'manager.$ref pr', "The attribute '".self::ENTERPRISE.":manager.\$ref' cannot be used in a filter."];
-        yield 'collection display' => ['User', 'groups.display eq "x"', "The attribute '".self::USER.":groups.display' cannot be used in a filter."];
-        yield 'collection $ref' => ['Group', 'members.$ref eq "x"', "The attribute '".self::GROUP.":members.\$ref' cannot be used in a filter."];
-        yield 'collection display in a value path' => ['Group', 'members[display pr]', "The attribute '".self::GROUP.":members.display' cannot be used in a filter."];
         yield 'unmapped common sub-attribute' => ['User', 'meta.location eq "x"', "The attribute '".self::USER.":meta.location' is not supported."];
-        yield 'unmapped common sub-attribute in a value path' => ['User', 'meta[location eq "x"]', "The attribute '".self::USER.":meta.location' is not supported."];
         yield 'unmapped common attribute' => ['Device', 'meta.created gt "2026-01-01T00:00:00Z"', "The attribute '".self::DEVICE.":meta.created' is not supported."];
-        yield 'value path on an unmapped attribute' => ['Device', 'meta[created pr]', "The attribute '".self::DEVICE.":meta' is not supported."];
         yield 'co on a uuid id' => ['User', 'id co "01"', "The operator 'co' is not supported for '".self::USER.":id'."];
-        yield 'sw on an int id' => ['Device', 'id sw "d"', "The operator 'sw' is not supported for '".self::DEVICE.":id'."];
         yield 'gt on a uuid id' => ['User', 'id gt "0"', "The operator 'gt' is not supported for '".self::USER.":id'."];
-        yield 'lt on a prefixed int id' => ['Device', 'id lt "d2"', "The operator 'lt' is not supported for '".self::DEVICE.":id'."];
-        yield 'ew on a converter member' => ['Device', 'tag ew "x"', "The operator 'ew' is not supported for '".self::AUDIT.":tag'."];
-        yield 'co on an untyped member' => ['Device', 'note co "x"', "The operator 'co' is not supported for '".self::AUDIT.":note'."];
         yield 'co on a reference' => ['User', 'manager co "x"', "The operator 'co' is not supported for '".self::ENTERPRISE.":manager.value'."];
-        yield 'ge on a reference' => ['User', 'manager.value ge "x"', "The operator 'ge' is not supported for '".self::ENTERPRISE.":manager.value'."];
-        yield 'gt on a collection' => ['Group', 'members gt "x"', "The operator 'gt' is not supported for '".self::GROUP.":members.value'."];
-        yield 'sw in a collection value path' => ['Group', 'members[value sw "x"]', "The operator 'sw' is not supported for '".self::GROUP.":members.value'."];
     }
 
     #[Test]

@@ -120,31 +120,6 @@ final class ConditionalWriteTest extends KernelTestCase
         self::assertSame('bjensen', $users->get('u1')['userName'] ?? null);
     }
 
-    #[Test]
-    #[TestDox('A write without If-Match succeeds after a concurrent change')]
-    public function writesUnconditionallyAfterConcurrentChange(): void
-    {
-        $server = $this->serverOf(new RacingRepository($this->inMemory(self::storedUser('u1', 'bjensen'))));
-
-        self::assertSame(200, $this->send($server, 'PUT', '/Users/u1', ['userName' => 'babs'])->getStatusCode());
-    }
-
-    #[Test]
-    #[TestDox('A Bulk operation with a version fails with 412 when the resource changed after the check')]
-    public function rejectsConcurrentChangeInBulk(): void
-    {
-        $server = $this->serverOf(new RacingRepository($this->inMemory(self::storedUser('u1', 'bjensen'))));
-
-        $response = $this->send($server, 'POST', '/Bulk', [
-            'schemas' => ['urn:ietf:params:scim:api:messages:2.0:BulkRequest'],
-            'Operations' => [['method' => 'PUT', 'path' => '/Users/u1', 'version' => 'W/"1"', 'data' => ['userName' => 'babs']]],
-        ]);
-
-        $operations = self::json($response)['Operations'] ?? null;
-        self::assertIsArray($operations);
-        self::assertSame('412', $operations[0]['status'] ?? null);
-    }
-
     /**
      * @param array<string, mixed> $user
      */

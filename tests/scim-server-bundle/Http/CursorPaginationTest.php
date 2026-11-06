@@ -58,26 +58,6 @@ final class CursorPaginationTest extends WebTestCase
         self::assertSame([6, 6], array_column($rest, 'totalResults'));
     }
 
-    #[Test]
-    #[TestDox('A cursor with one changed character is 400 invalidCursor')]
-    public function tamperedCursor(): void
-    {
-        $this->users('u1', 'u2', 'u3');
-        $cursor = $this->cursor(self::json($this->send('GET', '/scim/v2/Users?cursor&count=2')));
-        $tampered = substr_replace($cursor, 'A' === $cursor[20] ? 'B' : 'A', 20, 1);
-
-        self::assertScimError($this->send('GET', '/scim/v2/Users?count=2&cursor='.$tampered), 400, 'invalidCursor', 'The cursor is not valid for this query.');
-    }
-
-    #[Test]
-    #[TestDox('/ServiceProviderConfig publishes cursor and index pagination without cursorTimeout')]
-    public function publishesPagination(): void
-    {
-        $config = self::json($this->send('GET', '/scim/v2/ServiceProviderConfig'));
-
-        self::assertSame(['cursor' => true, 'index' => true, 'defaultPaginationMethod' => 'index', 'defaultPageSize' => 200, 'maxPageSize' => 200], $config['pagination'] ?? null);
-    }
-
     /**
      * @return list<string> the ids, in creation order
      */

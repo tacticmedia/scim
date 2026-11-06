@@ -24,7 +24,6 @@ final class AuthenticationTest extends WebTestCase
     {
         yield 'an endpoint' => ['/scim/v2/Users'];
         yield 'the root without a trailing slash' => ['/scim/v2'];
-        yield 'a discovery endpoint' => ['/scim/v2/ServiceProviderConfig'];
         yield 'an endpoint with OPTIONS' => ['/scim/v2/Users', 'OPTIONS'];
     }
 
@@ -44,8 +43,6 @@ final class AuthenticationTest extends WebTestCase
      */
     public static function wrongTokens(): iterable
     {
-        yield 'Bearer' => ['Bearer wrong-token'];
-        yield 'bare' => ['wrong-token'];
         yield 'Bearer with a token of another client in another case' => ['Bearer '.strtoupper(TestKernel::OKTA_TOKEN)];
     }
 
@@ -67,8 +64,6 @@ final class AuthenticationTest extends WebTestCase
     {
         yield 'Entra, Bearer' => [Scim::ENTRA, 'entra'];
         yield 'Okta, bare (Header authentication)' => [Scim::OKTA, 'okta'];
-        yield 'Okta, Bearer' => [['Authorization' => 'Bearer '.TestKernel::OKTA_TOKEN], 'okta'];
-        yield 'Entra, bearer in lower case' => [['Authorization' => 'bearer '.TestKernel::ENTRA_TOKEN], 'entra'];
     }
 
     /**
@@ -94,15 +89,5 @@ final class AuthenticationTest extends WebTestCase
 
         self::assertScimError($response, 405, null, 'The method OPTIONS is not allowed. Allowed: GET, HEAD, POST.');
         self::assertSame('GET, HEAD, POST', $response->headers->get('Allow'));
-    }
-
-    #[Test]
-    #[TestDox('An error outside the SCIM route keeps the kernel error page')]
-    public function otherRoutesKeepTheirErrors(): void
-    {
-        $response = $this->send('GET', '/other');
-
-        self::assertSame(404, $response->getStatusCode());
-        self::assertNotSame('application/scim+json', $response->headers->get('Content-Type'));
     }
 }

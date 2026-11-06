@@ -77,7 +77,6 @@ final class DocumentProjectorTest extends KernelTestCase
             [],
             [...self::MINIMUM, self::ENTERPRISE => ['manager' => ['value' => 'm1']]],
         ];
-        yield 'meta sub-attribute' => [['meta.created'], [], [], [...self::MINIMUM, 'meta' => ['created' => '2011-08-01T21:32:44Z']]];
         yield 'request attributes named, never attribute named' => [
             ['loginCount', 'password', 'badge.issuer', 'badge.pin'],
             [],

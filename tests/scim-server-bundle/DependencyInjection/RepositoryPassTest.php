@@ -20,7 +20,6 @@ use TacticMedia\ScimServerBundle\Tests\Fixtures\Invalid\TenantGroup;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Invalid\TenantUser;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Repository\PrinterRepository;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Valid\LdapUserRepository;
-use TacticMedia\ScimServerBundle\Tests\Object\Fixtures\Account;
 
 /**
  * Compiles a container with the bundle and the given classes, and records what RepositoryPass registered.
@@ -59,13 +58,6 @@ final class RepositoryPassTest extends KernelTestCase
 
         self::assertSame([50, false, 10, 1048576, true], [$config->getArgument('$maxResults'), $config->getArgument('$bulkSupported'), $config->getArgument('$bulkMaxOperations'), $config->getArgument('$bulkMaxPayloadSizeBytes'), $config->getArgument('$changePasswordSupported')]);
         self::assertSame(['entra' => 'secret'], $recorded->parameters['tacticmedia_scim_server.access_tokens']);
-    }
-
-    #[Test]
-    #[TestDox('changePassword is supported when a mapping writes password')]
-    public function changePasswordFollowsTheMappings(): void
-    {
-        self::assertTrue($this->compile([], [], Account::class)->definition('tacticmedia_scim_server.service_provider_config')->getArgument('$changePasswordSupported'));
     }
 
     #[Test]

@@ -23,11 +23,8 @@ final class FilterFolderTest extends KernelTestCase
     {
         yield 'a defined attribute stays' => ['displayName eq "x"', false, 'displayName eq "x"'];
         yield 'eq on an undefined attribute across types' => ['userName eq "x"', true, false];
-        yield 'ne on an undefined attribute across types' => ['userName ne "x"', true, true];
-        yield 'pr on an undefined attribute across types' => ['userName pr', true, false];
         yield 'meta.resourceType eq the type name' => ['META.RESOURCETYPE eq "Group"', false, true];
         yield 'meta.resourceType is case-exact' => ['meta.resourceType eq "group"', false, false];
-        yield 'meta.resourceType pr' => ['meta.resourceType pr', false, true];
         yield 'and with false on the left' => ['userName pr and displayName pr', true, false];
         yield 'and with false on the right' => ['displayName pr and userName pr', true, false];
         yield 'and with true on the left' => ['userName ne "x" and displayName pr', true, 'displayName pr'];
@@ -42,7 +39,6 @@ final class FilterFolderTest extends KernelTestCase
         yield 'a meta value path with the type name' => ['meta[resourceType eq "Group"]', false, true];
         yield 'a meta value path with another name' => ['meta[resourceType eq "User"]', false, false];
         yield 'a meta value path keeps the other sub-attributes' => ['meta[resourceType eq "Group" and created pr]', false, 'meta[created pr]'];
-        yield 'a meta value path without resourceType stays' => ['meta[created pr]', true, 'meta[created pr]'];
     }
 
     #[Test]

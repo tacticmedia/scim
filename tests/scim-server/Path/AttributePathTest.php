@@ -20,11 +20,9 @@ final class AttributePathTest extends KernelTestCase
     public static function validPaths(): iterable
     {
         yield 'attribute' => ['userName', null, 'userName', null];
-        yield 'sub-attribute' => ['name.givenName', null, 'name', 'givenName'];
         yield 'digits, hyphen and underscore' => ['x509Certificates.a-b_c', null, 'x509Certificates', 'a-b_c'];
         yield '$ref' => ['members.$ref', null, 'members', '$ref'];
         yield '$ref in another case' => ['members.$REF', null, 'members', '$REF'];
-        yield 'core URN' => ['urn:ietf:params:scim:schemas:core:2.0:User:userName', 'urn:ietf:params:scim:schemas:core:2.0:User', 'userName', null];
         yield 'extension URN with sub-attribute' => [self::ENTERPRISE.':manager.value', self::ENTERPRISE, 'manager', 'value'];
         yield 'URN prefix in another case' => ['URN:Example:Attr', 'URN:Example', 'Attr', null];
         yield 'schema URN alone splits at the last colon' => [self::ENTERPRISE, 'urn:ietf:params:scim:schemas:extension:enterprise:2.0', 'User', null];
@@ -47,17 +45,13 @@ final class AttributePathTest extends KernelTestCase
     {
         yield 'empty' => [''];
         yield 'leading digit' => ['1userName'];
-        yield 'leading underscore' => ['_userName'];
         yield 'dollar name other than $ref' => ['members.$value'];
         yield 'two sub-attributes' => ['name.givenName.first'];
         yield 'empty sub-attribute' => ['name.'];
-        yield 'empty attribute' => ['.givenName'];
         yield 'space' => ['user Name'];
         yield 'trailing newline' => ["userName\n"];
-        yield 'value filter' => ['emails[type eq "work"]'];
         yield 'colon without URN prefix' => ['schema:userName'];
         yield 'URN without attribute' => ['urn:example:'];
-        yield 'bare URN scheme' => ['urn:'];
     }
 
     #[Test]

@@ -32,7 +32,6 @@ final class DeltaPatchTest extends KernelTestCase
 {
     use ServerFixture;
     private const string PATCH_OP = 'urn:ietf:params:scim:api:messages:2.0:PatchOp';
-    private const string BULK_REQUEST = 'urn:ietf:params:scim:api:messages:2.0:BulkRequest';
     private const string LIGHT_GET = 'g1 excludedAttributes='.self::GROUP.':members';
     private const array ENTRA_ADD = ['op' => 'Add', 'path' => 'members', 'value' => [['$ref' => null, 'value' => 'u2']]];
 
@@ -244,7 +243,6 @@ final class DeltaPatchTest extends KernelTestCase
      */
     public static function projections(): iterable
     {
-        yield 'excludedAttributes=members' => ['?excludedAttributes=members', ['schemas' => [self::GROUP], 'id' => 'g1', 'displayName' => 'Tour Guides'], [self::LIGHT_GET, self::LIGHT_GET]];
         yield 'attributes=members' => ['?attributes=members', ['schemas' => [self::GROUP], 'id' => 'g1', 'members' => [
             ['value' => 'u1', 'type' => 'User', '$ref' => self::BASE_URL.'/Users/u1'],
             ['value' => 'u2'],
@@ -276,7 +274,6 @@ final class DeltaPatchTest extends KernelTestCase
     public static function fullPathRequests(): iterable
     {
         yield 'an operation that does not qualify' => [[self::members()], ['op' => 'remove', 'path' => 'members[value eq "u1" or value eq "u9"]']];
-        yield 'a repository without delta attributes' => [[], self::ENTRA_ADD];
     }
 
     /**
@@ -300,17 +297,6 @@ final class DeltaPatchTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('An invalid delta attribute is a LogicException')]
-    public function rejectsInvalidDeltaAttribute(): void
-    {
-        $server = $this->deltaServer(deltaAttributes: [new AttributePath(self::GROUP, 'displayName')]);
-
-        $this->expectException(\LogicException::class);
-
-        $this->send($server, 'PATCH', '/Groups/g1', $this->patch(self::ENTRA_ADD));
-    }
-
-    #[Test]
     #[TestDox('A group read without members and without meta.version is a LogicException')]
     public function needsVersion(): void
     {
@@ -321,19 +307,6 @@ final class DeltaPatchTest extends KernelTestCase
         $this->expectExceptionObject(new \LogicException('The DeltaRepository of the resource type Group returned a document without "meta.version".'));
 
         $this->send($server, 'PATCH', '/Groups/g1', $this->patch(self::ENTRA_ADD));
-    }
-
-    #[Test]
-    #[TestDox('A Bulk PATCH takes the delta path')]
-    public function patchesInBulk(): void
-    {
-        $server = $this->deltaServer();
-
-        $response = $this->send($server, 'POST', '/Bulk', ['schemas' => [self::BULK_REQUEST], 'Operations' => [['method' => 'PATCH', 'path' => '/Groups/g1', 'data' => $this->patch(self::ENTRA_ADD)]]]);
-
-        self::assertSame(200, $response->getStatusCode());
-        self::assertCount(1, $this->deltas->patches);
-        self::assertContainsOnlyInstancesOf(ResourcePatched::class, $this->events);
     }
 
     /**

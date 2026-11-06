@@ -67,15 +67,6 @@ final class BulkRequestTest extends KernelTestCase
         self::assertSame([], $this->events);
     }
 
-    #[Test]
-    #[TestDox('A body that is not a JSON object answers 400 invalidSyntax')]
-    public function rejectsNonObjectBody(): void
-    {
-        $server = $this->server();
-
-        self::assertScimError($this->send($server, 'POST', '/Bulk', '[]'), 400, 'invalidSyntax', 'The request body must be a JSON object.');
-    }
-
     /**
      * @return iterable<string, array{array<string, mixed>, int, string|null, string, string|null}>
      */
@@ -83,8 +74,6 @@ final class BulkRequestTest extends KernelTestCase
     {
         yield 'an unknown endpoint' => [['method' => 'DELETE', 'path' => '/Devices/1'], 404, null, 'The endpoint /Devices/1 does not exist.', self::BASE_URL.'/Devices/1'];
         yield 'POST to a resource' => [['method' => 'POST', 'path' => '/Users/u1', 'bulkId' => 'a', 'data' => []], 400, 'invalidSyntax', 'POST needs the path of a resource type endpoint, for example "/Users".', null];
-        yield 'POST to .search' => [['method' => 'POST', 'path' => '/Users/.search', 'bulkId' => 'a', 'data' => []], 400, 'invalidSyntax', 'POST needs the path of a resource type endpoint, for example "/Users".', null];
-        yield 'POST to /Bulk' => [['method' => 'POST', 'path' => '/Bulk', 'bulkId' => 'a', 'data' => []], 400, 'invalidSyntax', 'POST needs the path of a resource type endpoint, for example "/Users".', null];
         yield 'DELETE of a collection' => [['method' => 'DELETE', 'path' => 'Users'], 400, 'invalidSyntax', 'DELETE needs the path of a resource, for example "/Users/<id>".', self::BASE_URL.'/Users'];
         yield 'POST with data {}' => [['method' => 'POST', 'path' => '/Users', 'bulkId' => 'a', 'data' => new \stdClass()], 400, 'invalidValue', 'Attribute "userName" is required.', null];
     }

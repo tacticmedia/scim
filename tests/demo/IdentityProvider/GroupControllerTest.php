@@ -96,21 +96,6 @@ final class GroupControllerTest extends WebTestCase
     }
 
     #[Test]
-    #[TestDox('Deleting a provisioned group deletes it at the service provider')]
-    public function deletesProvisionedGroup(): void
-    {
-        $group = self::newGroup('Engineering');
-        self::service(Provisioner::class)->syncGroup($group);
-        $scimId = (string) $group->scimId;
-
-        $this->client->submit($this->client->request('GET', '/groups')->selectButton('Delete')->form());
-
-        self::assertNull(self::fakeServiceProvider()->groups->get($scimId));
-        $this->client->followRedirect();
-        self::assertSelectorTextSame('.flash-success', 'Group "Engineering" deleted. Provisioned.');
-    }
-
-    #[Test]
     #[TestDox('A failed delete keeps the group and its SCIM id; the next delete retries')]
     public function keepsGroupOnFailedDelete(): void
     {

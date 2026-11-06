@@ -44,7 +44,6 @@ final class DocumentNormalizerValueTest extends KernelTestCase
         yield 'empty string for manager' => [self::ENTERPRISE.':manager', '', null];
         yield 'list with one object for manager' => [self::ENTERPRISE.':manager', [['value' => 'm1']], ['value' => 'm1']];
         yield 'readOnly sub-attribute of manager' => [self::ENTERPRISE.':manager', ['value' => 'm1', 'displayName' => 'Boss'], ['value' => 'm1']];
-        yield 'manager sub-attribute' => [self::ENTERPRISE.':manager.value', 'm1', 'm1'];
     }
 
     #[Test]

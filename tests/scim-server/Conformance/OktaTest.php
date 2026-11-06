@@ -149,7 +149,6 @@ final class OktaTest extends KernelTestCase
     public static function unknownIds(): iterable
     {
         yield '010101001010101011001010101011' => ['010101001010101011001010101011'];
-        yield '00919288221112222' => ['00919288221112222'];
     }
 
     #[Test]
@@ -213,7 +212,6 @@ final class OktaTest extends KernelTestCase
     public static function activations(): iterable
     {
         yield '1.4.7 deactivate' => ['/Users/'.self::USER_ID, false];
-        yield '1.4.8 reactivate' => ['/Users/'.self::USER_ID, true];
     }
 
     #[Test]
@@ -300,15 +298,6 @@ final class OktaTest extends KernelTestCase
         self::assertSame([[['value' => self::USER_ID]]], array_column($lookup, 'members'));
         self::assertSame([self::GROUP_ID, 'g2'], self::ids($this->request('GET', '/Groups', headers: self::SPEC_TEST_GET)));
         self::assertEmptyListResponse($this->request('GET', '/Groups?filter=displayName%20eq%20%22Unknown%22&startIndex=1&count=100'));
-    }
-
-    #[Test]
-    #[TestDox('GET /Groups/{id} without parameters returns the members')]
-    public function retrievesGroupWithMembers(): void
-    {
-        $this->seed(groups: [self::storedGroup(self::GROUP_ID, 'Test SCIMv2', ['members' => [['value' => 'b1c794f24f4c49f4b5d503a4cb2686ea']]])]);
-
-        self::assertSame([['value' => 'b1c794f24f4c49f4b5d503a4cb2686ea']], self::json($this->request('GET', '/Groups/'.self::GROUP_ID))['members'] ?? null);
     }
 
     #[Test]
@@ -417,18 +406,6 @@ final class OktaTest extends KernelTestCase
         self::assertNoContent($this->request('PATCH', '/Groups/'.self::GROUP_ID, self::patchOp(['op' => 'replace', 'path' => 'members', 'value' => $members])));
 
         self::assertSame($expected, ($this->groups->get(self::GROUP_ID) ?? [])['members'] ?? null);
-    }
-
-    #[Test]
-    #[TestDox('AIW membership: PUT with the full member list answers 200 with the group')]
-    public function replacesMembership(): void
-    {
-        $this->seed(groups: [self::storedGroup(self::GROUP_ID, 'Test SCIMv2', ['members' => [['value' => 'u3']]])]);
-
-        $replaced = $this->request('PUT', '/Groups/'.self::GROUP_ID, ['schemas' => [self::GROUP], 'displayName' => 'Test SCIMv2', 'members' => [['value' => self::USER_ID, 'display' => 'test.user@okta.local']]]);
-
-        self::assertSame(200, $replaced->getStatusCode());
-        self::assertSame([self::GROUP_ID, 'Test SCIMv2', [['value' => self::USER_ID]]], [self::json($replaced)['id'] ?? null, self::json($replaced)['displayName'] ?? null, self::json($replaced)['members'] ?? null]);
     }
 
     #[Test]

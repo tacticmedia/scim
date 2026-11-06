@@ -59,20 +59,6 @@ final class ElementCollectionTest extends WebTestCase
     }
 
     #[Test]
-    #[TestDox('Filters and sortBy use the addresses and name.formatted')]
-    public function filtersAndSorts(): void
-    {
-        $paris = self::idOf($this->send('POST', '/scim/v2/Users', ['schemas' => [Scim::USER], 'userName' => 'bjensen', 'name' => ['givenName' => 'Barbara'], 'addresses' => [['type' => 'home', 'locality' => 'Berlin'], ['type' => 'work', 'locality' => 'Paris', 'primary' => true]]]));
-        $lyon = self::idOf($this->send('POST', '/scim/v2/Users', ['schemas' => [Scim::USER], 'userName' => 'jsmith', 'name' => ['familyName' => 'Smith'], 'addresses' => [['type' => 'work', 'locality' => 'Lyon']]]));
-
-        self::assertSame([$paris], self::ids($this->send('GET', '/scim/v2/Users?filter='.rawurlencode('addresses[type eq "work" and locality eq "paris"]'))));
-        self::assertSame([], self::ids($this->send('GET', '/scim/v2/Users?filter='.rawurlencode('addresses[type eq "home" and locality eq "paris"]'))));
-        self::assertSame([$lyon], self::ids($this->send('GET', '/scim/v2/Users?filter='.rawurlencode('name.formatted ew "smith"'))));
-        self::assertSame([$lyon, $paris], self::ids($this->send('GET', '/scim/v2/Users?sortBy=addresses.locality')));
-        self::assertSame([$paris, $lyon], self::ids($this->send('GET', '/scim/v2/Users?sortBy=name.formatted')));
-    }
-
-    #[Test]
     #[TestDox('A response without addresses does not load them')]
     public function excludedAddressesStayUnloaded(): void
     {

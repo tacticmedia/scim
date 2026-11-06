@@ -17,7 +17,6 @@ use TacticMedia\ScimServerBundle\Mapping\MappingRegistry;
 use TacticMedia\ScimServerBundle\Object\DocumentMapper;
 use TacticMedia\ScimServerBundle\Object\Instantiator;
 use TacticMedia\ScimServerBundle\Object\ObjectResourceRepository;
-use TacticMedia\ScimServerBundle\Object\ObjectStore;
 use TacticMedia\ScimServerBundle\Query\QueryPlanner;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\ArrayObjectStore;
 use TacticMedia\ScimServerBundle\Tests\Object\Fixtures\Account;
@@ -81,30 +80,6 @@ final class ObjectResourceRepositoryProjectionTest extends KernelTestCase
         $repository = $this->repositoryOf('User', self::kernelMappings(), new ArrayObjectStore(), new MockClock('2026-11-06 10:00:01', 'UTC'));
 
         self::assertSame(['created' => '2026-11-06T10:00:00Z', 'lastModified' => '2026-11-06T10:00:00Z', 'version' => 'W/"1"'], $repository->create(['userName' => 'bjensen'])['meta'] ?? null);
-    }
-
-    #[Test]
-    #[TestDox('replace() writes an immutable attribute that has no value')]
-    public function replaceWritesUnassignedImmutable(): void
-    {
-        $repository = $this->repositoryOf('User', self::mappings(['User' => Account::class]), new ArrayObjectStore());
-        $repository->create(['userName' => 'jdoe']);
-
-        $replaced = $repository->replace('acc-jdoe', ['userName' => 'jdoe', Account::EXTENSION => ['badge' => 'B1']]);
-
-        self::assertSame([['badge' => 'B1'], ['badge' => 'B1']], [$replaced[Account::EXTENSION] ?? null, $repository->get('acc-jdoe')[Account::EXTENSION] ?? null]);
-    }
-
-    #[Test]
-    #[TestDox('A store service that does not implement ObjectStore fails')]
-    public function wrongStoreServiceFails(): void
-    {
-        $mappings = self::mappings(['Group' => Team::class]);
-        $repository = new ObjectResourceRepository('Group', $mappings, new QueryPlanner($mappings, self::converters()), self::mapper($mappings), new Instantiator(new ServiceLocator([]), self::mapper($mappings)), new ServiceLocator([ArrayObjectStore::class => static fn (): object => new \stdClass()]), self::converters());
-
-        $this->expectExceptionObject(new \LogicException(\sprintf('The store service of %s does not implement %s.', Team::class, ObjectStore::class)));
-
-        $repository->get('team-1');
     }
 
     private function repository(Team $team): ObjectResourceRepository

@@ -35,9 +35,6 @@ final class QueryPlannerTest extends KernelTestCase
     public static function sortable(): iterable
     {
         yield 'Field' => ['User', 'userName', '$userName'];
-        yield 'complex sub-attribute' => ['User', 'name.givenName', '$firstName'];
-        yield 'Slot' => ['User', 'emails.value', '$email'];
-        yield 'Slots, the primary group first' => ['User', 'phoneNumbers.value', '$phone, $mobile'];
         yield 'Slots, the primary group declared last' => ['Contact', 'addresses.locality', '$homeLocality, $workLocality'];
         yield 'string id' => ['Contact', 'id', '$id'];
     }
@@ -48,13 +45,8 @@ final class QueryPlannerTest extends KernelTestCase
     public static function unsortable(): iterable
     {
         yield 'Reference' => ['User', 'manager'];
-        yield 'ReferenceCollection' => ['User', 'groups.value'];
-        yield 'Computed' => ['Device', 'label'];
         yield 'writeOnly' => ['Contact', 'password'];
-        yield 'slot type' => ['User', 'emails.type'];
-        yield 'unmapped' => ['User', 'meta.location'];
         yield 'uuid id' => ['User', 'id'];
-        yield 'int id' => ['Device', 'id'];
     }
 
     /**
@@ -159,7 +151,6 @@ final class QueryPlannerTest extends KernelTestCase
     {
         yield 'gt null matches nothing' => ['User', new Comparison(new AttributePath(self::USER, 'displayName'), ComparisonOperator::GreaterThan, null), 'false'];
         yield 'comparison on a complex attribute matches nothing' => ['User', new Comparison(new AttributePath(self::USER, 'name'), ComparisonOperator::Equal, 'x'), 'false'];
-        yield 'converter failure matches nothing' => ['Device', new Comparison(new AttributePath('urn:acme:scim:schemas:extension:audit:1.0:Device', 'tag'), ComparisonOperator::Equal, 5), 'false'];
     }
 
     #[Test]

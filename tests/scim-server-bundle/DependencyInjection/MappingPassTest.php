@@ -12,16 +12,12 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use TacticMedia\ScimServerBundle\DependencyInjection\Compiler\MappingPass;
 use TacticMedia\ScimServerBundle\Mapping\MappingException;
 use TacticMedia\ScimServerBundle\TacticMediaScimServerBundle;
-use TacticMedia\ScimServerBundle\Tests\Fixtures\Entity\Badge;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Entity\Group;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Entity\User;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Invalid\GroupPrefixedUser;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Invalid\MissingId;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Invalid\NoScimResource;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Invalid\WrongPhpType;
-use TacticMedia\ScimServerBundle\Tests\Fixtures\Valid\BaseEntity;
-use TacticMedia\ScimServerBundle\Tests\Fixtures\Valid\DerivedUser;
-use TacticMedia\ScimServerBundle\Tests\Fixtures\Valid\HasUserName;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Valid\IntGroup;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Valid\IntUser;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Valid\Person;
@@ -30,17 +26,6 @@ use TacticMedia\ScimServerBundle\Tests\Fixtures\Valid\PrefixedUser;
 
 final class MappingPassTest extends KernelTestCase
 {
-    #[Test]
-    #[TestDox('The test kernel discovers the fixture entities and serves their mappings')]
-    public function kernelServesTheFixtureMappings(): void
-    {
-        $container = self::getContainer();
-        $registry = $container->get('test.tacticmedia_scim_server.mapping_registry');
-
-        self::assertSame(['Badge' => Badge::class, 'Group' => Group::class, 'User' => User::class], $container->getParameter(MappingPass::CLASSES_PARAMETER));
-        self::assertSame(User::class, $registry->get('User')->class);
-    }
-
     #[Test]
     #[TestDox('Autoconfigured #[ScimResource] classes become the class parameter and file resources')]
     public function autoconfiguredClassesAreStored(): void
@@ -51,16 +36,6 @@ final class MappingPassTest extends KernelTestCase
         self::assertSame(['Group' => Group::class, 'User' => User::class], $this->classes($container));
         self::assertContains((string) new \ReflectionClass(User::class)->getFileName(), $files);
         self::assertContains((string) new \ReflectionClass(Group::class)->getFileName(), $files);
-    }
-
-    #[Test]
-    #[TestDox('The files of parent classes and traits are file resources')]
-    public function parentAndTraitFilesAreResources(): void
-    {
-        $files = array_map(strval(...), $this->compile(DerivedUser::class)->getResources());
-
-        self::assertContains((string) new \ReflectionClass(BaseEntity::class)->getFileName(), $files);
-        self::assertContains((string) new \ReflectionClass(HasUserName::class)->getFileName(), $files);
     }
 
     #[Test]

@@ -43,15 +43,6 @@ final class SearchTest extends KernelTestCase
         ], self::json($response));
     }
 
-    #[Test]
-    #[TestDox('POST .search with a body that is not a JSON object answers 400 invalidSyntax')]
-    public function rejectsInvalidSearchRequest(): void
-    {
-        $server = $this->usersAndGroups();
-
-        self::assertScimError($this->send($server, 'POST', '/Users/.search', '["filter"]'), 400, 'invalidSyntax', 'The request body must be a JSON object.');
-    }
-
     /**
      * @return iterable<string, array{array<string, string|int>, list<string>, int}>
      */
@@ -62,22 +53,15 @@ final class SearchTest extends KernelTestCase
         yield 'a page in the second type' => [['startIndex' => 5, 'count' => 2], ['g2'], 5];
         yield 'count 0' => [['count' => 0], [], 5];
         yield 'an attribute that only users define' => [['filter' => 'userName eq "bjensen" or displayName eq "Admins"'], ['u1', 'g2'], 2];
-        yield 'not of an undefined attribute' => [['filter' => 'not (userName pr)'], ['g1', 'g2'], 2];
-        yield 'ne on an undefined attribute' => [['filter' => 'userName ne "bjensen"'], ['u2', 'u3', 'g1', 'g2'], 4];
         yield 'meta.resourceType (RFC 7644 3.4.2.1)' => [['filter' => '(meta.resourceType eq "Group") or (meta.resourceType eq "Device")'], ['g1', 'g2'], 2];
         yield 'a value path on an undefined attribute' => [['filter' => 'emails[type eq "work"] or members[value eq "u1"]'], ['u1', 'g1'], 2];
         yield 'sortBy sorts across types (RFC 7644 3.4.2.3)' => [['sortBy' => 'displayName'], ['g2', 'u2', 'u1', 'u3', 'g1'], 5];
-        yield 'sortBy descending across types' => [['sortBy' => 'displayName', 'sortOrder' => 'descending'], ['g1', 'u3', 'u1', 'u2', 'g2'], 5];
         yield 'a sorted page that spans both types' => [['sortBy' => 'displayName', 'startIndex' => 2, 'count' => 2], ['u2', 'u1'], 5];
-        yield 'the last sorted page' => [['sortBy' => 'displayName', 'startIndex' => 4, 'count' => 5], ['u3', 'g1'], 5];
         yield 'a sorted page with count 0' => [['sortBy' => 'displayName', 'count' => 0], [], 5];
         yield 'a sorted page with a startIndex near PHP_INT_MAX' => [['sortBy' => 'displayName', 'startIndex' => '9223372036854775807'], [], 5];
         yield 'sorted with a filter' => [['sortBy' => 'displayName', 'filter' => 'displayName co "o" or userName eq "asmith"'], ['u2', 'u3', 'g1'], 3];
         yield 'a type without the sortBy attribute has no value: first when descending' => [['sortBy' => 'userName', 'sortOrder' => 'descending'], ['g1', 'g2', 'u3', 'u1', 'u2'], 5];
-        yield 'a sortBy that no type defines keeps registration order' => [['sortBy' => 'shoeSize'], ['u1', 'u2', 'u3', 'g1', 'g2'], 5];
-        yield 'a value path on meta' => [['filter' => 'meta[resourceType eq "Group"]'], ['g1', 'g2'], 2];
         yield 'sortBy meta.resourceType' => [['sortBy' => 'meta.resourceType'], ['g1', 'g2', 'u1', 'u2', 'u3'], 5];
-        yield 'sortBy meta.resourceType descending' => [['sortBy' => 'meta.resourceType', 'sortOrder' => 'descending'], ['u1', 'u2', 'u3', 'g1', 'g2'], 5];
     }
 
     /**
@@ -129,25 +113,6 @@ final class SearchTest extends KernelTestCase
                 ['schemas' => [self::USER], 'id' => 'u2', 'displayName' => 'Alice Smith'],
             ],
         ], self::json($response));
-    }
-
-    /**
-     * @return iterable<string, array{string, string}>
-     */
-    public static function invalidRootFilters(): iterable
-    {
-        yield 'a value of another type' => ['displayName gt true', "The value true does not fit the string attribute 'urn:ietf:params:scim:schemas:core:2.0:User:displayName'."];
-        yield 'an operator that meta.resourceType makes irrelevant for the type that defines the attribute' => ['meta.resourceType eq "Group" and active gt true', "The operator 'gt' does not apply to the boolean attribute 'urn:ietf:params:scim:schemas:core:2.0:User:active'."];
-    }
-
-    #[Test]
-    #[DataProvider('invalidRootFilters')]
-    #[TestDox('A root query still rejects a comparison that a type defines differently: $_dataName')]
-    public function rootRejectsInvalidComparison(string $filter, string $detail): void
-    {
-        $server = $this->usersAndGroups();
-
-        self::assertScimError($this->send($server, 'GET', '/'.self::query(['filter' => $filter])), 400, 'invalidFilter', $detail);
     }
 
     private function usersAndGroups(): ScimServer

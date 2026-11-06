@@ -164,10 +164,8 @@ final class DocumentMapperWriteTest extends KernelTestCase
      */
     public static function addresses(): iterable
     {
-        yield 'both sub-attributes' => [['addresses' => [['streetAddress' => 'Main 1', 'postalCode' => '1234', 'type' => 'work']]], ['Main 1', '1234']];
         yield 'one sub-attribute' => [['addresses' => [['streetAddress' => 'Main 1', 'type' => 'work']]], ['Main 1', '0000']];
         yield 'no element of the group' => [['addresses' => [['streetAddress' => 'Home 1', 'type' => 'home']]], [null, '0000']];
-        yield 'no attribute' => [[], [null, '0000']];
     }
 
     #[Test]

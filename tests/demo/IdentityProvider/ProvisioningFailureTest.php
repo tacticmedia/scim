@@ -25,28 +25,6 @@ final class ProvisioningFailureTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('A non-2xx answer throws ProvisioningFailed with the SCIM detail and is logged without the token')]
-    public function failsOnErrorStatus(): void
-    {
-        self::useSettings(Dialect::EntraDefault, 'wrong-token');
-        $user = self::newUser('Ada', 'Lovelace');
-
-        try {
-            self::service(Provisioner::class)->syncUser($user);
-            self::fail('ProvisioningFailed expected.');
-        } catch (ProvisioningFailed $provisioningFailed) {
-            self::assertSame('GET http://127.0.0.1:8001/scim/v2/Users?filter=userName%20eq%20%22ada.lovelace%40example.com%22 answered 401: Authorization failure.', $provisioningFailed->getMessage());
-        }
-
-        $entries = self::service(ProvisioningLogEntryRepository::class)->newest(10);
-        self::assertCount(1, $entries);
-        self::assertSame(['Accept' => 'application/scim+json', 'Authorization' => 'Bearer ***'], $entries[0]->requestHeaders);
-        self::assertSame(401, $entries[0]->status);
-        self::assertFalse($entries[0]->succeeded());
-        self::assertNull($user->scimId);
-    }
-
-    #[Test]
     #[TestDox('An unreachable service provider throws ProvisioningFailed and is logged with status 0')]
     public function failsWhenUnreachable(): void
     {

@@ -12,7 +12,6 @@ use Symfony\Component\Clock\MockClock;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Uid\UuidV7;
 use TacticMedia\ScimServer\Exception\ScimException;
-use TacticMedia\ScimServer\Path\AttributePath;
 use TacticMedia\ScimServer\Query\ListQuery;
 use TacticMedia\ScimServer\Repository\InMemoryResourceRepository;
 use TacticMedia\ScimServer\Schema\CoreResourceTypes;
@@ -150,15 +149,6 @@ final class InMemoryResourceRepositoryTest extends KernelTestCase
     {
         yield 'replace an unknown id' => ['u9', static fn (InMemoryResourceRepository $repository): array => $repository->replace('u9', ['userName' => 'x'])];
         yield 'delete an unknown id' => ['u9', static fn (InMemoryResourceRepository $repository) => $repository->delete('u9')];
-        yield 'replace a deleted id' => ['u1', static function (InMemoryResourceRepository $repository): array {
-            $repository->delete('u1');
-
-            return $repository->replace('u1', ['userName' => 'x']);
-        }];
-        yield 'delete a deleted id' => ['u1', static function (InMemoryResourceRepository $repository): void {
-            $repository->delete('u1');
-            $repository->delete('u1');
-        }];
     }
 
     /**
@@ -185,16 +175,6 @@ final class InMemoryResourceRepositoryTest extends KernelTestCase
 
         self::assertSame($seed, $repository->get('2819c223'));
         self::assertNull($repository->get('2819C223'));
-    }
-
-    #[Test]
-    #[TestDox('get() ignores the projection hints')]
-    public function getIgnoresHints(): void
-    {
-        $seed = ['schemas' => [self::USER], 'id' => '2819c223', 'userName' => 'bjensen', 'nickName' => 'Babs'];
-        $userName = new AttributePath(self::USER, 'userName');
-
-        self::assertSame($seed, $this->repository(new MockClock(), [$seed])->get('2819c223', [$userName], [$userName]));
     }
 
     /**

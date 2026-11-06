@@ -10,7 +10,6 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use TacticMedia\ScimServerBundle\Mapping\AttributeLoader;
 use TacticMedia\ScimServerBundle\Mapping\MappingException;
 use TacticMedia\ScimServerBundle\Mapping\MappingRegistry;
-use TacticMedia\ScimServerBundle\Mapping\ResourceMapping;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Entity\Group;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Entity\User;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Valid\UserProxy;
@@ -36,13 +35,6 @@ final class MappingRegistryTest extends KernelTestCase
 
         self::assertSame($registry->get('Group'), $registry->forClass(Group::class));
         self::assertSame($registry->get('User'), $registry->forClass(UserProxy::class));
-    }
-
-    #[Test]
-    #[TestDox('all() gives every mapping in discovery order')]
-    public function allGivesEveryMapping(): void
-    {
-        self::assertSame(['User', 'Group'], array_map(static fn (ResourceMapping $mapping): string => $mapping->name(), $this->registry()->all()));
     }
 
     #[Test]

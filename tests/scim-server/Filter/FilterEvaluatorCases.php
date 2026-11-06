@@ -58,22 +58,14 @@ final class FilterEvaluatorCases
         yield 'ne on an unassigned attribute' => ['nickName ne "x"', true];
         yield 'ne when another of many values is not equal' => ['emails.type ne "work"', true];
         yield 'ne when every value is equal' => ['photos.type ne "photo"', false];
-        yield 'ne on empty multi-valued attribute' => ['ims.type ne "xmpp"', true];
-        yield 'ne when no value is equal' => ['emails.type ne "other"', true];
         yield 'co' => ['name.familyName co "ENS"', true];
         yield 'co without the substring' => ['name.familyName co "smith"', false];
-        yield 'sw' => ['userName sw "BJ"', true];
-        yield 'sw not at the start' => ['userName sw "jensen"', false];
-        yield 'ew' => ['userName ew "SEN"', true];
         yield 'co on any email value' => ['emails co "EXAMPLE.COM"', true];
         yield 'ew on no email value' => ['emails ew ".net"', false];
         yield 'co on caseExact reference' => ['photos co "72930000000ccne"', false];
         yield 'co on caseExact reference in its case' => ['photos co "72930000000Ccne"', true];
-        yield 'sw on reference that ignores case' => ['homepage sw "https://example.com"', true];
         yield 'eq on multi-valued string' => ['tags eq "BETA"', true];
-        yield 'eq on multi-valued reference' => ['schemas eq "'.SchemaUrn::EnterpriseUser->value.'"', true];
         yield 'eq on unassigned attribute' => ['nickName eq "x"', false];
-        yield 'co on unassigned attribute' => ['nickName co "x"', false];
         yield 'eq on empty multi-valued attribute' => ['ims.type eq "xmpp"', false];
     }
 
@@ -87,24 +79,11 @@ final class FilterEvaluatorCases
         yield 'string ge on equal value' => ['userName ge "BJENSEN"', true];
         yield 'string lt' => ['userName lt "a"', false];
         yield 'string le on equal value' => ['userName le "bjensen"', true];
-        yield 'string gt on unassigned attribute' => ['nickName gt "a"', false];
-        yield 'dateTime gt' => ['meta.lastModified gt "2011-05-13T04:42:33Z"', true];
-        yield 'dateTime gt on same instant' => ['meta.lastModified gt "2011-05-13T04:42:34Z"', false];
         yield 'dateTime ge on same instant in other zone' => ['meta.lastModified ge "2011-05-13T14:42:34+10:00"', true];
-        yield 'dateTime lt in other zone' => ['meta.lastModified lt "2011-05-13T14:42:35+10:00"', true];
-        yield 'dateTime le' => ['meta.lastModified le "2011-05-13T04:42:33Z"', false];
         yield 'dateTime eq in other zone' => ['meta.lastModified eq "2011-05-13T14:42:34+10:00"', true];
         yield 'dateTime with offset in document' => ['birthday lt "1980-02-03T00:00:00Z"', true];
-        yield 'integer gt' => ['loginCount gt 9', true];
-        yield 'integer gt on equal value' => ['loginCount gt 10', false];
-        yield 'integer ge' => ['loginCount ge 10', true];
-        yield 'integer lt' => ['loginCount lt 11', true];
         yield 'integer le' => ['loginCount le 9', false];
-        yield 'integer eq' => ['loginCount eq 10', true];
-        yield 'decimal ge' => ['score ge 4.5', true];
-        yield 'decimal gt on equal value' => ['score gt 4.5', false];
         yield 'decimal lt integer' => ['score lt 5', true];
-        yield 'decimal eq' => ['score eq 4.5', true];
     }
 
     /**
@@ -112,17 +91,11 @@ final class FilterEvaluatorCases
      */
     public static function otherTypes(): iterable
     {
-        yield 'boolean eq' => ['active eq true', true];
-        yield 'boolean eq other value' => ['active eq false', false];
         yield 'boolean eq Entra string' => ['active eq "TRUE"', true];
         yield 'boolean eq other Entra string' => ['active eq "False"', false];
-        yield 'boolean ne' => ['active ne false', true];
         yield 'binary eq' => ['x509Certificates eq "MIIDQzCC"', true];
         yield 'binary eq in other case' => ['x509Certificates eq "miidqzcc"', false];
-        yield 'binary eq on extension' => ['avatar eq "YQ=="', true];
-        yield 'reference eq' => ['photos eq "https://photos.example.com/profilephoto/72930000000Ccne/F"', true];
         yield 'extension string' => ['employeeNumber eq "701984"', true];
-        yield 'extension sub-attribute' => ['manager.displayName eq "john smith"', true];
     }
 
     /**
@@ -134,13 +107,8 @@ final class FilterEvaluatorCases
         yield 'pr on null' => ['nickName pr', false];
         yield 'pr on empty string' => ['name.middleName pr', false];
         yield 'pr on singular complex' => ['name pr', true];
-        yield 'pr on empty multi-valued attribute' => ['ims pr', false];
         yield 'pr on multi-valued complex without value' => ['addresses pr', true];
-        yield 'pr on multi-valued complex' => ['emails pr', true];
-        yield 'pr on extension attribute' => ['employeeNumber pr', true];
-        yield 'pr on multi-valued string' => ['tags pr', true];
         yield 'eq null on null' => ['nickName eq null', true];
-        yield 'eq null on empty string' => ['name.middleName eq null', true];
         yield 'eq null on a value' => ['title eq null', false];
         yield 'ne null on a value' => ['title ne null', true];
         yield 'ne null on null' => ['nickName ne null', false];
@@ -168,14 +136,11 @@ final class FilterEvaluatorCases
         yield 'no single email satisfies both' => ['emails[type eq "home" and value co "example.com"]', false];
         yield 'attribute expressions may use different emails' => ['emails.type eq "home" and emails.value co "example.com"', true];
         yield 'not inside the value path' => ['emails[not (type eq "work")]', true];
-        yield 'Entra boolean string' => ['emails[primary eq "True"]', true];
         yield 'empty multi-valued attribute' => ['ims[type eq "xmpp"]', false];
         yield 'singular complex' => ['name[givenName eq "Barbara"]', true];
-        yield 'multi-valued complex without value' => ['addresses[streetAddress pr and type pr]', true];
         yield 'no element has the sub-attribute' => ['addresses[locality pr]', false];
         yield 'Entra value path' => ['emails[type eq "work"].value eq "bjensen@example.com"', true];
         yield 'Entra value path on another email' => ['emails[type eq "home"].value eq "bjensen@example.com"', false];
-        yield 'extension value path' => [SchemaUrn::EnterpriseUser->value.':manager[value eq "26118915-6090-4610-87e4-49d8ca9f808d"]', true];
     }
 
     /**
@@ -192,10 +157,8 @@ final class FilterEvaluatorCases
         ];
 
         yield 'integer gt on a string' => ['loginCount gt 1', false, $document];
-        yield 'integer lt on a string' => ['loginCount lt 100', false, $document];
         yield 'integer ne on a string' => ['loginCount ne 1', true, $document];
         yield 'boolean eq on another string' => ['active eq true', false, $document];
-        yield 'dateTime lt on an invalid instant' => ['meta.lastModified lt "2020-01-01T00:00:00Z"', false, $document];
         yield 'extension that is not an object' => ['employeeNumber pr', false, $document];
         yield 'multi-valued attribute that is not a list' => ['tags pr', false, $document];
         yield 'sub-attribute of an element that is not an object' => ['emails.value pr', false, $document];

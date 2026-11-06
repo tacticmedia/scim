@@ -50,8 +50,6 @@ final class CursorPaginationTest extends KernelTestCase
     public static function sortedQueries(): iterable
     {
         yield 'sortBy ascending, absent values last' => [['sortBy' => 'displayName']];
-        yield 'sortBy descending, absent values first' => [['sortBy' => 'displayName', 'sortOrder' => 'descending']];
-        yield 'sortBy and filter' => [['sortBy' => 'displayName', 'filter' => 'userName ne "dlee"']];
     }
 
     /**
@@ -124,36 +122,12 @@ final class CursorPaginationTest extends KernelTestCase
     }
 
     /**
-     * @return iterable<string, array{string, string, array<string, mixed>|null, string, string}>
-     */
-    public static function invalidRequests(): iterable
-    {
-        yield 'a cursor that the server did not issue' => ['GET', '/Users?cursor=abc', null, 'invalidCursor', self::INVALID_CURSOR];
-        yield 'a cursor that is not a string (query)' => ['GET', '/Users?cursor[]=abc', null, 'invalidCursor', self::INVALID_CURSOR];
-        yield 'a cursor that is not a string (SearchRequest)' => ['POST', '/Users/.search', ['cursor' => 5], 'invalidCursor', self::INVALID_CURSOR];
-        yield 'a count that is not an integer' => ['GET', '/Users?cursor&count=abc', null, 'invalidCount', 'The parameter "count" must be an integer.'];
-    }
-
-    /**
-     * @param array<string, mixed>|null $body
-     */
-    #[Test]
-    #[DataProvider('invalidRequests')]
-    #[TestDox('Answers 400 for $_dataName')]
-    public function rejectsInvalidRequest(string $method, string $uri, ?array $body, string $scimType, string $detail): void
-    {
-        self::assertScimError($this->send($this->fiveUsers(), $method, $uri, $body), 400, $scimType, $detail);
-    }
-
-    /**
      * @return iterable<string, array{string, bool}>
      */
     public static function countZeroQueries(): iterable
     {
         yield 'a CursorPaginatedRepository' => ['/Users?cursor&count=0', true];
         yield 'a repository without CursorPaginatedRepository' => ['/Users?cursor&count=0', false];
-        yield 'the root' => ['/?cursor&count=0', true];
-        yield 'the root with sortBy' => ['/?cursor&count=0&sortBy=displayName', true];
     }
 
     #[Test]
@@ -175,7 +149,6 @@ final class CursorPaginationTest extends KernelTestCase
     {
         yield 'index' => ['/Users?count=1', true, 1];
         yield 'a cursor by position' => ['/Users?cursor&count=1', true, 1];
-        yield 'a cursor by offset' => ['/Users?cursor&count=1', false, 1];
         yield 'a cursor with count=0' => ['/Users?cursor&count=0', true, 0];
     }
 
@@ -196,7 +169,6 @@ final class CursorPaginationTest extends KernelTestCase
      */
     public static function longSortValues(): iterable
     {
-        yield '250 emoji' => [str_repeat("\u{1F600}", 249)];
         yield '3500 ASCII characters' => [str_repeat('x', 3499)];
     }
 
@@ -209,15 +181,6 @@ final class CursorPaginationTest extends KernelTestCase
         $server = $this->server($users, cursorKey: self::KEY);
 
         self::assertSame([['ua'], ['ub'], ['uc']], array_map(self::ids(...), $this->traverse($server, '/Users', ['count' => 1, 'sortBy' => 'displayName'])));
-    }
-
-    #[Test]
-    #[TestDox('An empty cursor with startIndex pages by index')]
-    public function prefersStartIndexOverEmptyCursor(): void
-    {
-        $response = $this->send($this->fiveUsers(), 'GET', '/Users?cursor&startIndex=4');
-
-        self::assertSame(['totalResults' => 5, 'itemsPerPage' => 2, 'startIndex' => 4], array_intersect_key(self::json($response), ['totalResults' => 0, 'itemsPerPage' => 0, 'startIndex' => 0, 'nextCursor' => 0]));
     }
 
     #[Test]

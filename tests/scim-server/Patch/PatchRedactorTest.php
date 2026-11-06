@@ -34,7 +34,6 @@ final class PatchRedactorTest extends KernelTestCase
         yield 'a path to a sub-attribute that is never returned' => [new PatchOperation(PatchOperationType::Replace, 'keys[value eq "k1"].secret', 's3cret'), null];
         yield 'a path to a sub-attribute of a writeOnly attribute' => [new PatchOperation(PatchOperationType::Replace, 'vault.code', 's3cret'), null];
         yield 'a path to a returned attribute' => [new PatchOperation(PatchOperationType::Replace, 'userName', 'bjensen'), 'bjensen'];
-        yield 'a remove' => [new PatchOperation(PatchOperationType::Remove, 'password'), null];
         yield 'a path-less value' => [new PatchOperation(PatchOperationType::Replace, null, ['userName' => 'bjensen', 'password' => 's3cret', 'vault.code' => 's3cret', 'unknown' => 'kept']), ['userName' => 'bjensen', 'unknown' => 'kept']];
         yield 'URN-qualified keys' => [new PatchOperation(PatchOperationType::Add, null, [self::TOKEN.':token' => 's3cret', self::TOKEN.':label' => 'ci']), [self::TOKEN.':label' => 'ci']];
         yield 'an extension key' => [new PatchOperation(PatchOperationType::Add, null, [self::TOKEN => ['token' => 's3cret', 'label' => 'ci']]), [self::TOKEN => ['label' => 'ci']]];

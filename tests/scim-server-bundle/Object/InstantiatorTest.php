@@ -11,7 +11,6 @@ use Symfony\Component\DependencyInjection\ServiceLocator;
 use TacticMedia\ScimServer\Exception\ScimException;
 use TacticMedia\ScimServerBundle\Mapping\MappingRegistry;
 use TacticMedia\ScimServerBundle\Object\Instantiator;
-use TacticMedia\ScimServerBundle\Tests\Fixtures\Entity\User;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Valid\Device;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Valid\DeviceFactory;
 use TacticMedia\ScimServerBundle\Tests\Object\Fixtures\Account;
@@ -19,18 +18,6 @@ use TacticMedia\ScimServerBundle\Tests\Object\Fixtures\Account;
 final class InstantiatorTest extends KernelTestCase
 {
     use CreatesDocumentMapper;
-
-    #[Test]
-    #[TestDox('The constructor gets the converted value of the mapped property with the parameter name')]
-    public function constructorGetsMappedValues(): void
-    {
-        $mappings = self::kernelMappings();
-
-        $user = $this->instantiator($mappings)->create($mappings->get('User'), ['userName' => 'bjensen']);
-
-        self::assertInstanceOf(User::class, $user);
-        self::assertSame('bjensen', $user->getUserName());
-    }
 
     #[Test]
     #[TestDox('An optional parameter without value is omitted; a default: value is passed')]

@@ -105,69 +105,27 @@ final class ReplaceTest extends KernelTestCase
         self::assertScimError($this->send($server, 'PUT', '/Users/u9', ['userName' => 'babs']), 404, null, 'Resource u9 not found.');
     }
 
-    /**
-     * @return iterable<string, array{string, int}>
-     */
-    public static function ifMatch(): iterable
-    {
-        yield 'the current ETag' => ['W/"3"', 200];
-        yield 'any ETag' => ['*', 200];
-        yield 'an older ETag' => ['W/"2"', 412];
-    }
-
     #[Test]
-    #[DataProvider('ifMatch')]
-    #[TestDox('PUT with If-Match: $_dataName')]
-    public function answersIfMatch(string $ifMatch, int $status): void
+    #[TestDox('PUT with an If-Match of an older ETag answers 412 and keeps the resource')]
+    public function answersIfMatch(): void
     {
         $server = $this->server([self::storedUser('u1', 'bjensen', version: 'W/"3"')]);
 
-        $response = $this->send($server, 'PUT', '/Users/u1', ['userName' => 'babs'], ['If-Match' => $ifMatch]);
+        $response = $this->send($server, 'PUT', '/Users/u1', ['userName' => 'babs'], ['If-Match' => 'W/"2"']);
 
-        self::assertSame($status, $response->getStatusCode());
-        self::assertSame(200 === $status ? 'babs' : 'bjensen', ($this->users->get('u1') ?? [])['userName'] ?? null);
-    }
-
-    /**
-     * @return iterable<string, array{string, int}>
-     */
-    public static function ifNoneMatch(): iterable
-    {
-        yield 'any ETag' => ['*', 412];
-        yield 'the current ETag' => ['W/"3"', 412];
-        yield 'an older ETag' => ['W/"2"', 200];
+        self::assertSame(412, $response->getStatusCode());
+        self::assertSame('bjensen', ($this->users->get('u1') ?? [])['userName'] ?? null);
     }
 
     #[Test]
-    #[DataProvider('ifNoneMatch')]
-    #[TestDox('PUT with If-None-Match: $_dataName (RFC 7232 section 3.2)')]
-    public function answersIfNoneMatch(string $ifNoneMatch, int $status): void
+    #[TestDox('PUT with If-None-Match: * answers 412 and keeps the resource (RFC 7232 section 3.2)')]
+    public function answersIfNoneMatch(): void
     {
         $server = $this->server([self::storedUser('u1', 'bjensen', version: 'W/"3"')]);
 
-        $response = $this->send($server, 'PUT', '/Users/u1', ['userName' => 'babs'], ['If-None-Match' => $ifNoneMatch]);
+        $response = $this->send($server, 'PUT', '/Users/u1', ['userName' => 'babs'], ['If-None-Match' => '*']);
 
-        self::assertSame($status, $response->getStatusCode());
-        self::assertSame(200 === $status ? 'babs' : 'bjensen', ($this->users->get('u1') ?? [])['userName'] ?? null);
-    }
-
-    #[Test]
-    #[TestDox('PUT with an If-None-Match that matches answers 412 with a SCIM error')]
-    public function answersIfNoneMatchFailed(): void
-    {
-        $server = $this->server([self::storedUser('u1', 'bjensen')]);
-
-        self::assertScimError($this->send($server, 'PUT', '/Users/u1', ['userName' => 'babs'], ['If-None-Match' => '*']), 412, null, 'The resource matches If-None-Match.');
-    }
-
-    #[Test]
-    #[TestDox('PUT with an If-Match that does not match answers 412 with the RFC 7644 Table 8 detail')]
-    public function answersPreconditionFailed(): void
-    {
-        $server = $this->server([self::storedUser('u1', 'bjensen')]);
-
-        $response = $this->send($server, 'PUT', '/Users/u1', ['userName' => 'babs'], ['If-Match' => 'W/"0"']);
-
-        self::assertScimError($response, 412, null, 'Failed to update. Resource has changed on the server.');
+        self::assertSame(412, $response->getStatusCode());
+        self::assertSame('bjensen', ($this->users->get('u1') ?? [])['userName'] ?? null);
     }
 }

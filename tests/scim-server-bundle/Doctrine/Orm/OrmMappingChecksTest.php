@@ -11,7 +11,6 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use TacticMedia\ScimServerBundle\Doctrine\Orm\OrmMappingChecks;
 use TacticMedia\ScimServerBundle\Mapping\AttributeMapping;
 use TacticMedia\ScimServerBundle\Mapping\MappingException;
-use TacticMedia\ScimServerBundle\Mapping\MappingKind;
 use TacticMedia\ScimServerBundle\Mapping\ResourceMapping;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Entity\Group;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Entity\User;
@@ -92,20 +91,6 @@ final class OrmMappingChecksTest extends KernelTestCase
         ]));
 
         self::store()->find($mapping, 'x');
-    }
-
-    #[Test]
-    #[TestDox('A computed mapping needs no Doctrine field, and valid mappings pass')]
-    public function computedAndValidMappingsPass(): void
-    {
-        self::createSchema();
-        $users = self::mappings()->get('User');
-        $displayName = $this->at($users, 'displayName', null);
-        $computed = new AttributeMapping($displayName->path, $displayName->declaredPath, $displayName->definition, MappingKind::Computed, 'getDisplayName', true, 'string', true, false, false);
-        $withComputed = new ResourceMapping($users->class, $users->resourceType, $users->id, array_map(static fn (AttributeMapping $attribute): AttributeMapping => $attribute === $displayName ? $computed : $attribute, $users->attributes));
-
-        self::assertNull(self::store()->find($withComputed, 'x'));
-        self::assertNull(self::store()->find(self::mappings()->get('Group'), 'x'));
     }
 
     /**

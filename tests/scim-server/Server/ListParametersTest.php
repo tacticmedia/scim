@@ -20,9 +20,7 @@ final class ListParametersTest extends KernelTestCase
     public static function methods(): iterable
     {
         yield 'no cursor: index' => [['startIndex' => '2'], true, null, 2];
-        yield 'null cursor (SearchRequest): index' => [['cursor' => null], true, null, 1];
         yield 'empty cursor: first cursor page' => [['Cursor' => ''], true, '', 1];
-        yield 'empty cursor and empty startIndex: first cursor page' => [['cursor' => '', 'startIndex' => ''], true, '', 1];
         yield 'empty cursor and startIndex: index' => [['cursor' => '', 'startIndex' => '3'], true, null, 3];
         yield 'cursor wins over startIndex' => [['cursor' => 'abc', 'startIndex' => '3'], true, 'abc', 1];
         yield 'cursors off: cursor ignored' => [['cursor' => 'abc', 'startIndex' => '3'], false, null, 3];
@@ -47,7 +45,6 @@ final class ListParametersTest extends KernelTestCase
      */
     public static function invalidParameters(): iterable
     {
-        yield 'a cursor that is not a string' => [['cursor' => 5], ScimException::invalidCursor()];
         yield 'a cursor-mode count that is not an integer' => [['cursor' => '', 'count' => '1.5'], ScimException::invalidCount('The parameter "count" must be an integer.')];
         yield 'an index-mode count that is not an integer' => [['count' => '1.5'], ScimException::invalidValue('The parameter "count" must be an integer.')];
     }

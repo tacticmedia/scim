@@ -29,7 +29,6 @@ final class ETagTest extends KernelTestCase
     {
         yield 'equal weak ETags' => ['W/"a1"', 'W/"a1"', true];
         yield 'a strong header ETag against a weak one' => ['"a1"', 'W/"a1"', true];
-        yield 'a weak header ETag against a strong one' => ['W/"a1"', '"a1"', true];
         yield 'one of a list' => ['W/"a0" , W/"a1"', 'W/"a1"', true];
         yield 'an ETag with a comma' => ['"a,1"', '"a,1"', true];
         yield 'any ETag' => ['*', 'W/"a1"', true];

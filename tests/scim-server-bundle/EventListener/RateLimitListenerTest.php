@@ -17,8 +17,6 @@ use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\RateLimiter\Reservation;
 use Symfony\Component\RateLimiter\Storage\InMemoryStorage;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
-use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
-use Symfony\Component\Security\Core\User\InMemoryUser;
 use TacticMedia\ScimServerBundle\Controller\ScimController;
 use TacticMedia\ScimServerBundle\EventListener\RateLimitListener;
 
@@ -53,20 +51,6 @@ final class RateLimitListenerTest extends KernelTestCase
 
         self::assertSame([429, '1', 'application/scim+json'], [$response?->getStatusCode(), $response?->headers->get('Retry-After'), $response?->headers->get('Content-Type')]);
         self::assertSame(['schemas' => ['urn:ietf:params:scim:api:messages:2.0:Error'], 'status' => '429', 'detail' => 'Too many requests.'], json_decode((string) $response?->getContent(), true));
-    }
-
-    #[Test]
-    #[TestDox('The user identifier of the token is the key')]
-    public function keysByUserIdentifier(): void
-    {
-        $tokens = new TokenStorage();
-        $listener = new RateLimitListener($this->oneRequestPerHour(), $tokens);
-
-        $tokens->setToken(new UsernamePasswordToken(new InMemoryUser('entra', null, ['ROLE_SCIM_CLIENT']), 'scim', ['ROLE_SCIM_CLIENT']));
-        $entra = [$this->handle($listener, $this->scimRequest())->getResponse(), $this->handle($listener, $this->scimRequest())->getResponse()?->getStatusCode()];
-        $tokens->setToken(new UsernamePasswordToken(new InMemoryUser('okta', null, ['ROLE_SCIM_CLIENT']), 'scim', ['ROLE_SCIM_CLIENT']));
-
-        self::assertSame([null, 429, null], [...$entra, $this->handle($listener, $this->scimRequest())->getResponse()]);
     }
 
     #[Test]

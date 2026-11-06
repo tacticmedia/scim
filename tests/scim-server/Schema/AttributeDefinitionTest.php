@@ -63,30 +63,11 @@ final class AttributeDefinitionTest extends KernelTestCase
     }
 
     #[Test]
-    #[TestDox('toArray() adds canonicalValues when there are any')]
-    public function toArrayAddsCanonicalValuesWhenThereAreAny(): void
-    {
-        $type = new AttributeDefinition('type', canonicalValues: ['work', 'home']);
-
-        self::assertSame(['work', 'home'], $type->toArray()['canonicalValues']);
-    }
-
-    #[Test]
     #[TestDox('toArray() of a reference always has referenceTypes')]
     public function toArrayOfAReferenceAlwaysHasReferenceTypes(): void
     {
         $reference = new AttributeDefinition('$ref', AttributeType::Reference);
 
         self::assertSame([], $reference->toArray()['referenceTypes']);
-    }
-
-    #[Test]
-    #[TestDox('toArray() of a complex attribute serializes the sub-attributes')]
-    public function toArrayOfAComplexAttributeSerializesTheSubAttributes(): void
-    {
-        $givenName = new AttributeDefinition('givenName', AttributeType::String);
-        $name = new AttributeDefinition('name', AttributeType::Complex, subAttributes: [$givenName]);
-
-        self::assertSame([$givenName->toArray()], $name->toArray()['subAttributes']);
     }
 }

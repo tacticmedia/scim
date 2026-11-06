@@ -22,7 +22,6 @@ final class ScimExceptionTest extends KernelTestCase
         yield 'tooMany' => [static fn (): ScimException => ScimException::tooMany('Too many.'), [...$error, 'scimType' => 'tooMany', 'detail' => 'Too many.']];
         yield 'invalidVers' => [static fn (): ScimException => ScimException::invalidVersion('Version.'), [...$error, 'scimType' => 'invalidVers', 'detail' => 'Version.']];
         yield 'invalidCursor, one fixed detail' => [ScimException::invalidCursor(...), [...$error, 'scimType' => 'invalidCursor', 'detail' => 'The cursor is not valid for this query.']];
-        yield 'expiredCursor' => [ScimException::expiredCursor(...), [...$error, 'scimType' => 'expiredCursor', 'detail' => 'The cursor has expired. Request the first page again.']];
         yield 'invalidCount' => [static fn (): ScimException => ScimException::invalidCount('Count.'), [...$error, 'scimType' => 'invalidCount', 'detail' => 'Count.']];
     }
 

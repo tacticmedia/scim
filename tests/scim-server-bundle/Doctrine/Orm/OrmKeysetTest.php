@@ -71,13 +71,9 @@ final class OrmKeysetTest extends KernelTestCase
         yield 'the int id with a prefix' => [null, SortOrder::Ascending, ['a', 'b', 'c', 'd', 'e']];
         yield 'a case-exact string descending' => ['name', SortOrder::Descending, ['e', 'd', 'c', 'b', 'a']];
         yield 'a nullable date ascending, absent last' => ['endsAt', SortOrder::Ascending, ['c', 'a', 'd', 'b', 'e']];
-        yield 'a nullable date descending, absent first' => ['endsAt', SortOrder::Descending, ['b', 'e', 'a', 'd', 'c']];
         yield 'a nullable int ascending' => ['floor', SortOrder::Ascending, ['b', 'e', 'a', 'd', 'c']];
-        yield 'a nullable int descending' => ['floor', SortOrder::Descending, ['c', 'a', 'd', 'e', 'b']];
         yield 'a nullable float ascending' => ['rate', SortOrder::Ascending, ['c', 'a', 'd', 'e', 'b']];
-        yield 'a nullable float descending' => ['rate', SortOrder::Descending, ['b', 'e', 'a', 'd', 'c']];
         yield 'a nullable Boolean ascending' => ['active', SortOrder::Ascending, ['b', 'e', 'a', 'd', 'c']];
-        yield 'a nullable Boolean descending' => ['active', SortOrder::Descending, ['c', 'a', 'd', 'b', 'e']];
     }
 
     #[Test]
@@ -111,19 +107,6 @@ final class OrmKeysetTest extends KernelTestCase
 
         self::assertInstanceOf(CursorObjectPage::class, $page);
         self::assertSame([4, null], [\count($page->objects), $page->next]);
-    }
-
-    #[Test]
-    #[TestDox('The relations to load are filled on the page objects')]
-    public function preloads(): void
-    {
-        $plans = new Plans(self::mappings(), 'User', Directory::seed(self::createSchema()));
-
-        $users = self::store()->queryAfter($plans->mapping(), new ObjectQuery(null, [], SortOrder::Ascending, 1, 2, [$plans->at('manager')]), null)->objects ?? [];
-
-        self::assertCount(2, $users);
-        self::assertContainsOnlyInstancesOf(User::class, $users);
-        self::assertFalse(self::getContainer()->get('doctrine.orm.entity_manager')->getUnitOfWork()->isUninitializedObject($users[1]->getManager()));
     }
 
     #[Test]

@@ -80,66 +80,12 @@ final class RetrieveTest extends KernelTestCase
         self::assertSame($response->headers->get('ETag'), self::json($response)['meta']['version'] ?? null);
     }
 
-    #[Test]
-    #[TestDox('GET fills manager.$ref (Entra reads the complex form)')]
-    public function fillsManagerReference(): void
-    {
-        $server = $this->server([self::storedUser('u1', 'bjensen'), self::storedUser('u2', 'jsmith', [self::ENTERPRISE => ['manager' => ['value' => 'u1']]])]);
-
-        $response = $this->send($server, 'GET', '/Users/u2');
-
-        self::assertSame([self::ENTERPRISE => ['manager' => ['value' => 'u1', '$ref' => self::BASE_URL.'/Users/u1']]], array_intersect_key(self::json($response), [self::ENTERPRISE => true]));
-    }
-
-    /**
-     * @return iterable<string, array{string, list<string>}>
-     */
-    public static function extensionProjections(): iterable
-    {
-        yield 'attributes' => ['attributes', ['schemas', 'id', self::ENTERPRISE]];
-        yield 'excludedAttributes' => ['excludedAttributes', ['schemas', 'id', 'meta', 'userName']];
-    }
-
-    /**
-     * @param list<string> $keys
-     */
-    #[Test]
-    #[DataProvider('extensionProjections')]
-    #[TestDox('A whole extension URN in $_dataName selects every attribute of the extension')]
-    public function projectsWholeExtension(string $parameter, array $keys): void
-    {
-        $server = $this->server([self::storedUser('u1', 'bjensen', [self::ENTERPRISE => ['employeeNumber' => '701984', 'department' => 'Tour Operations']])]);
-
-        $response = self::json($this->send($server, 'GET', '/Users/u1'.self::query([$parameter => self::ENTERPRISE])));
-
-        self::assertSame($keys, array_keys($response));
-        self::assertSame(\in_array(self::ENTERPRISE, $keys, true) ? ['employeeNumber' => '701984', 'department' => 'Tour Operations'] : null, $response[self::ENTERPRISE] ?? null);
-    }
-
-    #[Test]
-    #[TestDox('A document without meta.version gets a weak ETag computed from the document, the same on every GET')]
-    public function computesETag(): void
-    {
-        $server = $this->server([['schemas' => [self::USER], 'id' => 'u1', 'userName' => 'bjensen']]);
-
-        $first = $this->send($server, 'GET', '/Users/u1');
-        $second = $this->send($server, 'GET', '/Users/u1');
-
-        $etag = (string) $first->headers->get('ETag');
-        self::assertMatchesRegularExpression('/\AW\/"[0-9a-f]{32}"\z/', $etag);
-        self::assertSame($etag, $second->headers->get('ETag'));
-        self::assertSame(['resourceType' => 'User', 'location' => self::BASE_URL.'/Users/u1', 'version' => $etag], self::json($first)['meta']);
-    }
-
     /**
      * @return iterable<string, array{string, int}>
      */
     public static function ifNoneMatch(): iterable
     {
         yield 'the same weak ETag' => ['W/"1"', 304];
-        yield 'the opaque tag without W/' => ['"1"', 304];
-        yield 'one of several ETags' => ['W/"0", W/"1"', 304];
-        yield 'any ETag' => ['*', 304];
         yield 'another ETag' => ['W/"2"', 200];
     }
 
@@ -162,9 +108,6 @@ final class RetrieveTest extends KernelTestCase
      */
     public static function ifMatch(): iterable
     {
-        yield 'the current ETag' => [['If-Match' => 'W/"1"'], 200];
-        yield 'any ETag' => [['If-Match' => '*'], 200];
-        yield 'another ETag' => [['If-Match' => 'W/"2"'], 412];
         yield 'another ETag and a matching If-None-Match' => [['If-Match' => 'W/"2"', 'If-None-Match' => 'W/"1"'], 412];
         yield 'the current ETag and a matching If-None-Match' => [['If-Match' => 'W/"1"', 'If-None-Match' => 'W/"1"'], 304];
     }

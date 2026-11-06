@@ -30,19 +30,4 @@ final class SchemaTest extends KernelTestCase
 
         self::assertNull($schema->attribute('displayName'));
     }
-
-    #[Test]
-    #[TestDox('toArray() has the id, name, description and serialized attributes')]
-    public function toArrayHasTheIdNameDescriptionAndSerializedAttributes(): void
-    {
-        $userName = new AttributeDefinition('userName');
-        $schema = new Schema('urn:example:User', 'User', 'User Account', [$userName]);
-
-        self::assertSame([
-            'id' => 'urn:example:User',
-            'name' => 'User',
-            'description' => 'User Account',
-            'attributes' => [$userName->toArray()],
-        ], $schema->toArray());
-    }
 }

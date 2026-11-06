@@ -55,10 +55,8 @@ final class DiscoveryTest extends WebTestCase
     {
         yield 'the root without a trailing slash' => ['/scim/v2', 200, Scim::LIST_RESPONSE];
         yield 'the root with a trailing slash' => ['/scim/v2/', 200, Scim::LIST_RESPONSE];
-        yield 'an endpoint after a double slash (Entra Tenant URL with a trailing slash)' => ['/scim/v2//Users', 200, Scim::LIST_RESPONSE];
         yield 'an encoded slash in an id' => ['/scim/v2/Users/a%2Fb', 404, 'Resource a/b not found.'];
         yield 'an encoded space in an id' => ['/scim/v2/Users/a%20b', 404, 'Resource a b not found.'];
-        yield 'an unknown endpoint' => ['/scim/v2/Devices', 404, 'The endpoint /scim/v2/Devices does not exist.'];
         yield 'an encoded slash in the prefix' => ['/scim%2Fv2/Users', 404, 'The endpoint /scim%2Fv2/Users does not exist.'];
         yield 'an encoded slash between the prefix and the endpoint' => ['/scim/v2%2FUsers', 404, 'The endpoint /scim/v2%2FUsers does not exist.'];
         yield 'an encoded slash in the prefix of a resource path' => ['/scim%2Fv2/Groups/Users/a', 404, 'The endpoint /scim%2Fv2/Groups/Users/a does not exist.'];

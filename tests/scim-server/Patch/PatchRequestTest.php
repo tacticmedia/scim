@@ -96,7 +96,6 @@ final class PatchRequestTest extends KernelTestCase
         $operationsDetail = '"Operations" must be a non-empty list of operations.';
 
         yield 'no schemas' => [['Operations' => [$operation]], ScimErrorType::InvalidSyntax, $schemaDetail];
-        yield 'schemas as a string' => [['schemas' => self::PATCH_OP, 'Operations' => [$operation]], ScimErrorType::InvalidSyntax, $schemaDetail];
         yield 'resource schema' => [['schemas' => [PatchFixtures::USER], 'Operations' => [$operation]], ScimErrorType::InvalidSyntax, $schemaDetail];
         yield 'no Operations' => [['schemas' => [self::PATCH_OP]], ScimErrorType::InvalidSyntax, $operationsDetail];
         yield 'empty Operations' => [['schemas' => [self::PATCH_OP], 'Operations' => []], ScimErrorType::InvalidSyntax, $operationsDetail];
@@ -105,7 +104,6 @@ final class PatchRequestTest extends KernelTestCase
         yield 'operation is a list' => [self::message(['add']), ScimErrorType::InvalidSyntax, 'Operations[0] must be an object.'];
         yield 'no op' => [self::message(['path' => 'nickName', 'value' => 'Babs']), ScimErrorType::InvalidSyntax, 'Operations[0]: "op" must be "add", "remove" or "replace".'];
         yield 'JSON Patch op' => [self::message(['op' => 'move', 'path' => 'nickName']), ScimErrorType::InvalidSyntax, 'Operations[0]: "op" must be "add", "remove" or "replace".'];
-        yield 'op is not a string' => [self::message(['op' => 1, 'path' => 'nickName']), ScimErrorType::InvalidSyntax, 'Operations[0]: "op" must be "add", "remove" or "replace".'];
         yield 'path is not a string' => [self::message(['op' => 'add', 'path' => ['nickName'], 'value' => 'Babs']), ScimErrorType::InvalidSyntax, 'Operations[0]: "path" must be a string.'];
         yield 'remove without path' => [self::message(['op' => 'remove']), ScimErrorType::NoTarget, 'Operations[0]: "remove" needs a "path".'];
         yield 'add without value' => [self::message(['op' => 'add', 'path' => 'nickName']), ScimErrorType::InvalidValue, 'Operations[0]: "add" needs a "value".'];

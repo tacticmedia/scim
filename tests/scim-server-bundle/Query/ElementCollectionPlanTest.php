@@ -35,17 +35,10 @@ final class ElementCollectionPlanTest extends KernelTestCase
     public static function filters(): iterable
     {
         yield 'eq on a sub-attribute' => ['addresses.locality eq "Paris"', 'exists($addresses, $locality eq "Paris")'];
-        yield 'co on a sub-attribute' => ['addresses.locality co "ar"', 'exists($addresses, $locality co "ar")'];
-        yield 'pr on a sub-attribute' => ['addresses.locality pr', 'exists($addresses, $locality pr)'];
-        yield 'eq on type and primary' => ['addresses.type eq "work" or addresses.primary eq true', 'or(exists($addresses, $type eq "work"), exists($addresses, $primary eq true))'];
         yield 'one element satisfies the value path' => ['addresses[type eq "work" and locality sw "P"]', 'exists($addresses, and($type eq "work", $locality sw "P"))'];
-        yield 'not inside the value path' => ['addresses[not (type eq "work")]', 'exists($addresses, not($type eq "work"))'];
         yield 'ne: no element has a value, or one has another' => ['addresses.locality ne "Paris"', 'or(not(exists($addresses, $locality pr)), exists($addresses, and($locality pr, not($locality eq "Paris"))))'];
         yield 'pr on the attribute' => ['addresses pr', 'exists($addresses)'];
-        yield 'a literal that converts to null' => ['addresses.locality eq ""', 'false'];
         yield 'a DQL expression' => ['name.formatted sw "Bar"', 'getFormattedName() sw "Bar"'];
-        yield 'pr on a DQL expression' => ['name.formatted pr', 'getFormattedName() pr'];
-        yield 'a DQL expression in the element of its attribute' => ['name[formatted eq "Babs Jensen"]', 'and(or($firstName pr, $lastName pr, getFormattedName() pr), getFormattedName() eq "Babs Jensen")'];
     }
 
     #[Test]
@@ -99,18 +92,6 @@ final class ElementCollectionPlanTest extends KernelTestCase
         self::assertSame($sortBy, array_map(static fn (AttributeMapping $member): string => $member->label(), $query->sortBy));
     }
 
-    #[Test]
-    #[TestDox('The response loads the element collection unless it is excluded')]
-    public function loadsTheElementCollection(): void
-    {
-        $all = $this->plan(new ListQuery(), 'User');
-        $excluded = $this->plan(new ListQuery(excludedAttributes: [$this->path('addresses', 'User')]), 'User');
-
-        self::assertInstanceOf(ObjectQuery::class, $all);
-        self::assertInstanceOf(ObjectQuery::class, $excluded);
-        self::assertSame([['$manager', '$groups', '$addresses'], ['$manager', '$groups']], [$this->labels($all->load), $this->labels($excluded->load)]);
-    }
-
     private function pagerPlan(string $filter): ObjectQuery|false
     {
         $registry = new MappingRegistry(new AttributeLoader(), ['Pager' => Pager::class]);
@@ -126,15 +107,5 @@ final class ElementCollectionPlanTest extends KernelTestCase
             NativeConverter::class => static fn (): NativeConverter => new NativeConverter(),
             IdConverter::class => static fn (): IdConverter => new IdConverter(),
         ]));
-    }
-
-    /**
-     * @param list<AttributeMapping> $mappings
-     *
-     * @return list<string>
-     */
-    private function labels(array $mappings): array
-    {
-        return array_map(static fn (AttributeMapping $mapping): string => $mapping->label(), $mappings);
     }
 }

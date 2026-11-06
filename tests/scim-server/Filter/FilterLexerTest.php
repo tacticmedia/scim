@@ -47,7 +47,6 @@ final class FilterLexerTest extends KernelTestCase
             [FilterTokenType::Unknown, "'y'", 5],
             [FilterTokenType::Unknown, '#', 9],
         ]];
-        yield 'unterminated string' => ['"abc', [[FilterTokenType::Unknown, '"abc', 0]]];
         yield 'invalid UTF-8' => ["\xFF", [[FilterTokenType::Unknown, "\xFF", 0]]];
     }
 

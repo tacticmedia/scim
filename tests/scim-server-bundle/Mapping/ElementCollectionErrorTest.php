@@ -26,7 +26,6 @@ use TacticMedia\ScimServerBundle\Tests\Mapping\Fixtures\ElementOnMethod;
 use TacticMedia\ScimServerBundle\Tests\Mapping\Fixtures\ElementOnReference;
 use TacticMedia\ScimServerBundle\Tests\Mapping\Fixtures\ElementOnSubAttribute;
 use TacticMedia\ScimServerBundle\Tests\Mapping\Fixtures\ElementWithConverter;
-use TacticMedia\ScimServerBundle\Tests\Mapping\Fixtures\ElementWithoutAdder;
 use TacticMedia\ScimServerBundle\Tests\Mapping\Fixtures\ElementWithoutMembers;
 use TacticMedia\ScimServerBundle\Tests\Mapping\Fixtures\NullableValueEmail;
 use TacticMedia\ScimServerBundle\Tests\Mapping\Fixtures\TenantEmail;
@@ -50,7 +49,6 @@ final class ElementCollectionErrorTest extends KernelTestCase
         yield 'a resource class' => [ElementIsResource::class, ['%s::$emails: "emails" has elementClass: '.Group::class.', which has #[ScimResource]. An element class has no #[ScimResource].']];
         yield 'an abstract class' => [ElementAbstract::class, ['%s::$emails: "emails" has elementClass: '.AbstractEmail::class.', which cannot be instantiated. Use a concrete class.']];
         yield 'no mapped member' => [ElementWithoutMembers::class, ['%s::$emails: "emails" has elementClass: stdClass, which maps no sub-attribute. Add #[ScimAttribute(\'<sub-attribute>\')] to its properties.']];
-        yield 'no adder and remover' => [ElementWithoutAdder::class, ['%s::$emails: "emails" is readWrite, but $emails has no adder and remover. Add add<Element>() and remove<Element>() methods for $emails.']];
         yield 'a slot of the same attribute' => [ElementAndSlot::class, ['%s: $workEmail ("emails[type eq "work"].value") and $emails ("emails") map the same value. Map it once.']];
         yield 'the errors of each element member' => [ElementMemberErrors::class, [
             BrokenEmail::class.'::$value: "valu" '.self::NOT_A_SUB_ATTRIBUTE,

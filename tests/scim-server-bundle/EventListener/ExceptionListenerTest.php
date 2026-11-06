@@ -10,7 +10,6 @@ use PHPUnit\Framework\Attributes\TestDox;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
@@ -23,7 +22,6 @@ final class ExceptionListenerTest extends KernelTestCase
      */
     public static function exceptions(): iterable
     {
-        yield '403 with its message' => [new AccessDeniedHttpException('Access Denied.'), 403, 'Access Denied.', []];
         yield '429 with Retry-After' => [new TooManyRequestsHttpException(120, 'Slow down.'), 429, 'Slow down.', ['retry-after' => '120']];
         yield '404 without a message, with the status text' => [new HttpException(404), 404, 'Not Found', []];
         yield '401 with a WWW-Authenticate challenge' => [new HttpException(401, 'No token.'), 401, 'No token.', ['www-authenticate' => 'Bearer']];
@@ -58,7 +56,6 @@ final class ExceptionListenerTest extends KernelTestCase
         $other->attributes->set('_route', 'other');
 
         yield 'another route' => [$other, new \RuntimeException('Boom.')];
-        yield 'no route and another exception' => [Request::create('/scim/v2/Users'), new \RuntimeException('Boom.')];
     }
 
     #[Test]

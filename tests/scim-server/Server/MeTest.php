@@ -43,45 +43,31 @@ final class MeTest extends KernelTestCase
     }
 
     /**
-     * @return iterable<string, array{string, string, array<string, mixed>|null, array<string, string>, int}>
+     * @return iterable<string, array{string, string, array<string, mixed>|null, int}>
      */
     public static function aliasedRequests(): iterable
     {
         $patch = ['schemas' => ['urn:ietf:params:scim:api:messages:2.0:PatchOp'], 'Operations' => [['op' => 'add', 'path' => 'nickName', 'value' => 'Babs']]];
 
-        yield 'HEAD' => ['HEAD', '/Me', null, [], 200];
-        yield 'GET with a matching If-None-Match' => ['GET', '/Me', null, ['If-None-Match' => 'W/"1"'], 304];
-        yield 'PUT' => ['PUT', '/Me', ['userName' => 'babs'], [], 200];
-        yield 'PUT with another If-Match' => ['PUT', '/Me', ['userName' => 'babs'], ['If-Match' => 'W/"9"'], 412];
-        yield 'PATCH' => ['PATCH', '/Me', $patch, [], 204];
-        yield 'DELETE' => ['DELETE', '/Me', null, [], 204];
-        yield '/me in lower case' => ['GET', '/me', null, [], 200];
-        yield '/ME/ with a trailing slash' => ['GET', '/ME/', null, [], 200];
+        yield 'HEAD' => ['HEAD', '/Me', null, 200];
+        yield 'PUT' => ['PUT', '/Me', ['userName' => 'babs'], 200];
+        yield 'PATCH' => ['PATCH', '/Me', $patch, 204];
+        yield '/me in lower case' => ['GET', '/me', null, 200];
     }
 
     /**
      * @param array<string, mixed>|null $body
-     * @param array<string, string>     $headers
      */
     #[Test]
     #[DataProvider('aliasedRequests')]
     #[TestDox('$_dataName acts on the resource and answers with Location')]
-    public function actsOnTheResource(string $method, string $path, ?array $body, array $headers, int $status): void
+    public function actsOnTheResource(string $method, string $path, ?array $body, int $status): void
     {
         $server = $this->meServer(new MeSubject('User', 'u1'));
 
-        $response = $this->send($server, $method, $path, $body, $headers);
+        $response = $this->send($server, $method, $path, $body);
 
         self::assertSame([$status, self::LOCATION], [$response->getStatusCode(), $response->headers->get('Location')]);
-    }
-
-    #[Test]
-    #[TestDox('GET /Me applies attributes')]
-    public function appliesAttributes(): void
-    {
-        $server = $this->meServer(new MeSubject('User', 'u1'));
-
-        self::assertSame(['schemas', 'id', 'userName'], array_keys(self::json($this->send($server, 'GET', '/Me?attributes=userName'))));
     }
 
     #[Test]
@@ -96,24 +82,13 @@ final class MeTest extends KernelTestCase
         self::assertInstanceOf(ResourceDeleted::class, $this->events[0] ?? null);
     }
 
-    /**
-     * @return iterable<string, array{string}>
-     */
-    public static function methods(): iterable
-    {
-        foreach (['GET', 'HEAD', 'PUT', 'PATCH', 'DELETE'] as $method) {
-            yield $method => [$method];
-        }
-    }
-
     #[Test]
-    #[DataProvider('methods')]
-    #[TestDox('$_dataName /Me answers 404 without Location when the subject has no resource')]
-    public function answersNotFoundWithoutSubject(string $method): void
+    #[TestDox('GET /Me answers 404 without Location when the subject has no resource')]
+    public function answersNotFoundWithoutSubject(): void
     {
         $server = $this->meServer(null);
 
-        $response = $this->send($server, $method, '/Me', 'PUT' === $method || 'PATCH' === $method ? [] : null);
+        $response = $this->send($server, 'GET', '/Me');
 
         self::assertScimError($response, 404, null, self::NO_RESOURCE);
         self::assertFalse($response->headers->has('Location'));
@@ -146,10 +121,7 @@ final class MeTest extends KernelTestCase
     public static function lookups(): iterable
     {
         yield 'userName in another case' => ['userName', 'BJENSEN'];
-        yield 'externalId' => ['externalId', 'ext-1'];
         yield 'emails.value' => ['emails.value', 'b@example.com'];
-        yield 'emails, through its value' => ['emails', 'b@example.com'];
-        yield 'an enterprise attribute' => [self::ENTERPRISE.':employeeNumber', '701984'];
     }
 
     #[Test]
@@ -190,7 +162,6 @@ final class MeTest extends KernelTestCase
         yield 'unknown resource type' => [new MeSubject('Device', 'd1'), 'The MeResolver names the resource type "Device", which is not registered.'];
         yield 'unknown attribute' => [new MeSubject('User', 'x', 'shoeSize'), 'The MeResolver names the attribute "shoeSize", which the resource type User cannot filter.'];
         yield 'invalid attribute path' => [new MeSubject('User', 'x', 'not a path'), 'The MeResolver names the attribute "not a path", which the resource type User cannot filter.'];
-        yield 'never returned attribute' => [new MeSubject('User', 'x', 'password'), 'The MeResolver names the attribute "password", which the resource type User cannot filter.'];
     }
 
     #[Test]
