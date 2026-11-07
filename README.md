@@ -10,6 +10,8 @@ The development monorepo of two Composer packages. Packagist does not list this 
 A GitHub Actions workflow pushes each package directory to its read-only split repository. Packagist reads only
 the split repositories ([docs/release.md](docs/release.md)).
 
+The documentation site is https://tacticmedia.github.io/scim/. Its source is `website/` and `zensical.toml`.
+
 ## Start
 
 Requirements: PHP 8.5 with Xdebug, Composer 2. `make ci` and the demo also need Docker.

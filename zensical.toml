@@ -1,0 +1,61 @@
+[project]
+site_name = "tacticmedia/scim"
+site_description = "SCIM 2.0 server library and Symfony bundle"
+site_url = "https://tacticmedia.github.io/scim/"
+repo_url = "https://github.com/tacticmedia/scim"
+repo_name = "tacticmedia/scim"
+docs_dir = "website"
+site_dir = "var/site"
+dev_addr = "127.0.0.1:8002"
+strict = true
+watch = ["scim-server-bundle/docs", "scim-server/README.md"]
+nav = [
+  { "Home" = "index.md" },
+  { "Bundle" = "bundle/index.md" },
+  { "Identity providers" = [
+    { "Overview" = "bundle/identity-providers.md" },
+    { "Microsoft Entra ID setup" = "identity-providers/entra-id.md" },
+    { "Okta setup" = "identity-providers/okta.md" },
+  ] },
+  { "Library" = "library.md" },
+]
+
+[project.theme]
+language = "en"
+features = [
+  "content.code.copy",
+  "navigation.footer",
+  "navigation.instant",
+  "navigation.sections",
+  "navigation.top",
+  "navigation.tracking",
+  "search.highlight",
+]
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme)"
+toggle.icon = "lucide/sun-moon"
+toggle.name = "Switch to light mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to system preference"
+
+[project.markdown_extensions]
+admonition = {}
+attr_list = {}
+md_in_html = {}
+toc.permalink = true
+pymdownx.details = {}
+pymdownx.highlight.anchor_linenums = true
+pymdownx.highlight.pygments_lang_class = true
+pymdownx.inlinehilite = {}
+pymdownx.superfences = {}

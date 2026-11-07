@@ -18,6 +18,8 @@ and `tacticmedia/scim-server-bundle`, its Symfony bundle. The support floor is P
 | `tests/demo/` | Demo tests, namespace `TacticMedia\ScimDemo\Tests\`. `EndToEnd/` starts the service provider with `php -S` through `EndToEnd/public/index.php` and provisions it from the identity provider kernel in the environment `e2e`. |
 | `bin/dependencies` | The dependency gate, see [Dependency gate](#dependency-gate). |
 | `.github/workflows/split.yml` | Pushes each package directory to its split repository, see [docs/release.md](docs/release.md). |
+| `zensical.toml`, `website/` | The documentation site, see [Documentation site](#documentation-site). |
+| `.github/workflows/docs.yml` | Builds the documentation site and deploys it to GitHub Pages on each push to `main`. |
 
 Everything outside the two package directories is development tooling and never ships.
 
@@ -59,6 +61,20 @@ The bundle ships files for the coding agents of its consumers:
   their path below `vendor/tacticmedia/scim-server-bundle/`, in a code span.
 - When a change makes a step, a rule or an example of the skill wrong, change the skill in the same commit.
 
+## Documentation site
+
+[Zensical](https://zensical.org) builds https://tacticmedia.github.io/scim/ from `website/`. `make docs-build`
+writes it to `var/site/`.
+
+- `website/bundle` and `website/library.md` are symbolic links to `scim-server-bundle/docs` and
+  `scim-server/README.md`. Zensical follows a symbolic link only when its target is in `watch` of `zensical.toml`.
+- Thus a link in a shipped doc goes to a sibling shipped doc or is absolute. A relative link to another file works
+  in the package, but not on the site. The strict build fails for a broken Markdown link or anchor, but does not
+  check a link to a file that is not Markdown, such as `LICENSE`.
+- `website/identity-providers/` holds the setup steps for the admin console of each identity provider. These pages
+  do not ship. The shipped docs and the skill link to them by absolute URL.
+- The Zensical version is in the `Makefile`. CI uses the same targets.
+
 ## Demo applications
 
 `demo/identity-provider/` and `demo/service-provider/` are standalone Symfony applications. Each has its own
@@ -85,6 +101,8 @@ The bundle ships files for the coding agents of its consumers:
 | `make ci` | The CI workflow through act, see [docs/ci.md](docs/ci.md). |
 | `docker compose --file demo/compose.yaml up --build` | Builds the demo images, then starts the service provider on port 8001 and the identity provider on port 8000, each with a new database. Ctrl-C stops both. See [demo/README.md](demo/README.md). |
 | `bin/console` | The console of the test kernel, environment `test`, debug on. |
+| `make docs` | The documentation site with live reload on http://127.0.0.1:8002. Needs `uv`. |
+| `make docs-build` | The documentation site in `var/site/`. It fails for a broken link or anchor. |
 
 The gates one at a time: `composer lint`, `composer dependencies`, `composer rector:check`, `composer cs:check`,
 `composer stan`.
