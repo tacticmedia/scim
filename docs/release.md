@@ -26,7 +26,8 @@ repository, or for a tag, as the same tag. The workflow does not run in a fork.
 Versions are lock-step. One monorepo tag releases both packages with the same version.
 
 1. Make sure that the root `versions` options and the bundle constraint on the library name the line that you
-   release, see [AGENTS.md, Version bump](../AGENTS.md#version-bump).
+   release, see [AGENTS.md, Version bump](../AGENTS.md#version-bump). For the tag `0.1.2`, they are `0.1.x-dev` and
+   `^0.1`. The workflow checks this before it pushes a tag, and fails when they do not match.
 2. Make sure that CI passes on `main`.
 3. Tag the monorepo `X.Y.Z`, without a `v`. For a pre-release, add a suffix such as `-beta1` or `-RC1`. The
    workflow does not run for a tag that starts with `v`.

@@ -118,7 +118,7 @@
                 "reference": "config",
                 "symlink": true,
                 "versions": {
-                    "tacticmedia/scim-server": "1.0.x-dev"
+                    "tacticmedia/scim-server": "0.1.x-dev"
                 }
             }
         },
@@ -129,7 +129,7 @@
                 "reference": "config",
                 "symlink": true,
                 "versions": {
-                    "tacticmedia/scim-server-bundle": "1.0.x-dev"
+                    "tacticmedia/scim-server-bundle": "0.1.x-dev"
                 }
             }
         }

@@ -34,7 +34,7 @@ repositories. Thus:
 - The `type` is `library` or `symfony-bundle`.
 - The `require` of a package lists what its `src/` needs to load and run, and nothing more.
   `composer dependencies` checks the packages that `src/` names.
-- The bundle requires `tacticmedia/scim-server` at the current line, for example `^1.0`.
+- The bundle requires `tacticmedia/scim-server` at the current line, for example `^0.1`.
 - The library never uses the bundle.
 - The package `README.md` tells a consumer how to install and register the package. It tells a contributor that
   the code is in the github.com/tacticmedia/scim monorepo.
@@ -110,9 +110,9 @@ analyses, so it cannot use the root `vendor/`.
 Both packages always have the same version.
 
 1. In the root `composer.json`, set the `versions` option of both path repositories to the new line, for example
-   `1.1.x-dev`.
+   `0.2.x-dev`.
 2. In `scim-server-bundle/composer.json`, set the `tacticmedia/scim-server` constraint to the new line, for
-   example `^1.1`.
+   example `^0.2`.
 3. Run `composer update`.
 4. Run `make qa-check`.
 

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "89c6c10f63d4ccf4abdd724298531663",
+    "content-hash": "c0975dd911d60c17358b03a1af44f7ad",
     "packages": [
         {
             "name": "doctrine/lexer",
@@ -2772,11 +2772,11 @@
         },
         {
             "name": "tacticmedia/scim-server",
-            "version": "1.0.x-dev",
+            "version": "0.1.x-dev",
             "dist": {
                 "type": "path",
                 "url": "scim-server",
-                "reference": "c4f4f19e10bc22deede4c4c7b02ff7a41844ef60"
+                "reference": "26e73d0f492d5a20c979ddbb206f7b61dd5f44de"
             },
             "require": {
                 "doctrine/lexer": "^3.0",
@@ -2816,11 +2816,11 @@
         },
         {
             "name": "tacticmedia/scim-server-bundle",
-            "version": "1.0.x-dev",
+            "version": "0.1.x-dev",
             "dist": {
                 "type": "path",
                 "url": "scim-server-bundle",
-                "reference": "cb49f194b6f6d5f5510bb09a8d5f7f4c95d3eb6f"
+                "reference": "6c4dcae79a6a631bc00e0d1868e639c1ef8a99d9"
             },
             "require": {
                 "php": ">=8.5",
@@ -2838,7 +2838,7 @@
                 "symfony/security-core": "^8.1",
                 "symfony/security-http": "^8.1.11",
                 "symfony/uid": "^8.1",
-                "tacticmedia/scim-server": "^1.0"
+                "tacticmedia/scim-server": "^0.1"
             },
             "conflict": {
                 "doctrine/doctrine-bundle": "<3.3",

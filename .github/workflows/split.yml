@@ -28,6 +28,15 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Check that the tag matches the version line
+        if: github.ref_type == 'tag'
+        run: |
+          line="$(printf '%s' "$GITHUB_REF_NAME" | cut -d. -f1-2)"
+          jq -e --arg dev "$line.x-dev" '[.repositories[].options.versions[]] | all(. == $dev)' composer.json > /dev/null \
+            || { echo "::error::The root path repositories must declare $line.x-dev for the tag $GITHUB_REF_NAME."; exit 1; }
+          jq -e --arg constraint "^$line" '.require["tacticmedia/scim-server"] == $constraint' scim-server-bundle/composer.json > /dev/null \
+            || { echo "::error::scim-server-bundle must require tacticmedia/scim-server ^$line for the tag $GITHUB_REF_NAME."; exit 1; }
+
       - name: Split and push
         env:
           PREFIX: ${{ matrix.package.prefix }}
