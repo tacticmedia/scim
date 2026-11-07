@@ -14,8 +14,8 @@ use TacticMedia\ScimServerBundle\Tests\Fixtures\Entity\User;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\EventListener\ProvisioningRecorder;
 
 /**
- * Okta, var/research/idp-okta-others.md section 1, with the bare token of Okta "Header" authentication and the request
- * bodies of tests/scim-server/Conformance/OktaTest.php. Bodies carry Content-Type: application/scim+json, because
+ * Okta, with the bare token of Okta "Header" authentication and the request bodies of
+ * tests/scim-server/Conformance/OktaTest.php. Bodies carry Content-Type: application/scim+json, because
  * Request::create() adds application/x-www-form-urlencoded to a POST or PUT without one.
  */
 final class OktaTest extends WebTestCase

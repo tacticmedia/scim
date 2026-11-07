@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace TacticMedia\ScimDemo\Tests\EndToEnd;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Tools\SchemaTool;
 use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\Assert;
 use Symfony\Component\HttpClient\HttpClient;
@@ -24,7 +25,7 @@ use TacticMedia\ScimDemo\ServiceProvider\Kernel;
  */
 final class ServiceProviderServer
 {
-    private const string REPOSITORY_DIRECTORY = __DIR__.'/../../..';
+    private const string FRONT_CONTROLLER_DIRECTORY = __DIR__.'/public';
     private const int START_TIMEOUT_SECONDS = 10;
     private const string ENTERPRISE_USER = 'urn:ietf:params:scim:schemas:extension:enterprise:2.0:User';
 
@@ -45,24 +46,25 @@ final class ServiceProviderServer
     }
 
     /**
-     * Creates the schema with the SP console, starts the server and waits until it answers.
+     * Creates the schema with the SP kernel of this process, starts the server and waits until it answers.
      */
     public function start(): void
     {
-        // Nothing reads the output pipes while the IdP waits for the SP. "-q" and no SHELL_VERBOSITY keep a full pipe
-        // from blocking the SP.
-        $environment = ['APP_ENV' => 'test', 'DATABASE_PATH' => $this->databasePath, 'SCIM_TOKEN' => $this->token, 'SHELL_VERBOSITY' => false, 'XDEBUG_MODE' => 'off'];
-        new Process([\PHP_BINARY, 'demo/service-provider/bin/console', 'doctrine:schema:create', '--quiet'], self::REPOSITORY_DIRECTORY, $environment)->mustRun();
-
-        $address = '127.0.0.1:'.$this->freePort();
-        $this->scimBaseUrl = 'http://'.$address.'/scim/v2';
-        $this->process = new Process([\PHP_BINARY, '-S', $address, '-q', '-t', 'demo/service-provider/public'], self::REPOSITORY_DIRECTORY, $environment, timeout: null);
-        $this->process->start();
-        $this->awaitAnswer($this->process);
-
         $_SERVER['DATABASE_PATH'] = $this->databasePath;
         $this->kernel = new Kernel('test', true);
         $this->kernel->boot();
+
+        $entityManager = $this->entityManager();
+        new SchemaTool($entityManager)->createSchema($entityManager->getMetadataFactory()->getAllMetadata());
+
+        // Nothing reads the output pipes while the IdP waits for the SP. "-q" and no SHELL_VERBOSITY keep a full pipe
+        // from blocking the SP.
+        $environment = ['DATABASE_PATH' => $this->databasePath, 'SCIM_TOKEN' => $this->token, 'SHELL_VERBOSITY' => false, 'XDEBUG_MODE' => 'off'];
+        $address = '127.0.0.1:'.$this->freePort();
+        $this->scimBaseUrl = 'http://'.$address.'/scim/v2';
+        $this->process = new Process([\PHP_BINARY, '-S', $address, '-q', '-t', self::FRONT_CONTROLLER_DIRECTORY], env: $environment, timeout: null);
+        $this->process->start();
+        $this->awaitAnswer($this->process);
     }
 
     public function stop(): void

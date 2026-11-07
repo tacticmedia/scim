@@ -10,6 +10,7 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use TacticMedia\ScimServerBundle\Mapping\ResourceMapping;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Entity\User;
 use TacticMedia\ScimServerBundle\Tests\Fixtures\Entity\UserAddress;
+use TacticMedia\ScimServerBundle\Tests\Object\Fixtures\LazyMailbox;
 use TacticMedia\ScimServerBundle\Tests\Object\Fixtures\Mailbox;
 use TacticMedia\ScimServerBundle\Tests\Object\Fixtures\MailboxEmail;
 
@@ -34,6 +35,15 @@ final class ElementCollectionMapperTest extends KernelTestCase
         );
         self::assertSame([['primary' => false]], self::mapper(self::kernelMappings())->toDocument(self::kernelMappings()->get('User'), $user)['addresses'] ?? null);
         self::assertArrayNotHasKey('emails', self::mapper(self::mappings(['User' => Mailbox::class]))->toDocument($this->mailboxes(), new Mailbox()));
+    }
+
+    #[Test]
+    #[TestDox('Read omits a null element collection')]
+    public function omitsNullCollection(): void
+    {
+        $mappings = self::mappings(['User' => LazyMailbox::class]);
+
+        self::assertArrayNotHasKey('emails', self::mapper($mappings)->toDocument($mappings->get('User'), new LazyMailbox()));
     }
 
     #[Test]

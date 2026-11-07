@@ -10,9 +10,9 @@ use PHPUnit\Framework\Attributes\TestDox;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
- * Microsoft Entra ID, var/research/idp-entra.md section 4, default style and aadOptscim062020 style, with the request
- * bodies of tests/scim-server/Conformance/EntraIdTest.php. Requests for attributes that the fixture User does not
- * map (roles, emails of type other) are left out: they answer 400 invalidPath.
+ * Microsoft Entra ID, default style and aadOptscim062020 style, with the request bodies of
+ * tests/scim-server/Conformance/EntraIdTest.php. Requests for attributes that the fixture User does not map (roles,
+ * emails of type other) are left out: they answer 400 invalidPath.
  */
 final class EntraIdTest extends WebTestCase
 {

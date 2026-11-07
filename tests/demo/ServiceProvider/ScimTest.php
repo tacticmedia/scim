@@ -127,6 +127,21 @@ final class ScimTest extends WebTestCase
     }
 
     #[Test]
+    #[TestDox('A PUT of a group keeps the listed members and removes the other users and nested groups')]
+    public function replacesGroupMembers(): void
+    {
+        $keptId = $this->idOf($this->send('POST', '/Users', ['schemas' => [self::USER], 'userName' => 'ada.lovelace@example.com']));
+        $removedId = $this->idOf($this->send('POST', '/Users', ['schemas' => [self::USER], 'userName' => 'grace.hopper@example.com']));
+        $platformId = $this->idOf($this->send('POST', '/Groups', ['schemas' => [self::GROUP], 'displayName' => 'Platform']));
+        $groupId = $this->idOf($this->send('POST', '/Groups', ['schemas' => [self::GROUP], 'displayName' => 'Engineering', 'members' => [['value' => $keptId], ['value' => $removedId], ['value' => $platformId, 'type' => 'Group']]]));
+
+        $replaced = $this->send('PUT', '/Groups/'.$groupId, ['schemas' => [self::GROUP], 'displayName' => 'Engineering', 'members' => [['value' => $keptId]]]);
+
+        self::assertSame(200, $replaced->getStatusCode(), (string) $replaced->getContent());
+        self::assertSame([$keptId], array_column($this->json($this->send('GET', '/Groups/'.$groupId))['members'] ?? [], 'value'));
+    }
+
+    #[Test]
     #[TestDox('The version column gives W/"1" on create and a new ETag after a member change, so the old ETag is 412')]
     public function versionsGroup(): void
     {

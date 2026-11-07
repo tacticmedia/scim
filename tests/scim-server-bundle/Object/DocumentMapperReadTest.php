@@ -101,6 +101,18 @@ final class DocumentMapperReadTest extends KernelTestCase
     }
 
     #[Test]
+    #[TestDox('A member without displayName and userName has no display')]
+    public function memberWithoutDisplayValue(): void
+    {
+        $group = new IntGroup();
+        $group->addUser(new IntUser());
+
+        $mappings = self::mappings(['User' => IntUser::class, 'Group' => IntGroup::class]);
+
+        self::assertSame([['value' => '0', 'type' => 'User']], self::mapper($mappings)->toDocument($mappings->get('Group'), $group)['members'] ?? null);
+    }
+
+    #[Test]
     #[TestDox('An application resource type reads its prefixed int id, extension, converters and methods')]
     public function applicationResourceTypeIsRead(): void
     {
