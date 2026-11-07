@@ -13,11 +13,6 @@ final class Kernel extends BaseKernel
         getKernelParameters as private microKernelParameters;
     }
 
-    public function getProjectDir(): string
-    {
-        return \dirname(__DIR__);
-    }
-
     /**
      * Without ".kernel.config_dir" a debug build writes no config/reference.php, which php-cs-fixer would reject.
      *

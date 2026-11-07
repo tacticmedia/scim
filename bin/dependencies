@@ -4,7 +4,7 @@
 declare(strict_types=1);
 
 /*
- * Runs composer-dependency-analyser on an isolated install of each path package in var/dependencies/.
+ * Runs composer-dependency-analyser on an isolated install of each path package and demo application in var/dependencies/.
  * The analyser reads the vendor directory of the composer.json it analyses, so it cannot use the root vendor/.
  */
 
@@ -68,11 +68,11 @@ $repositories = array_map(
 
 $failedPackages = [];
 
-foreach ($repositories as $repository) {
-    echo PHP_EOL, '==> ', basename($repository['url']), PHP_EOL;
+foreach ([...array_column($repositories, 'url'), $rootDir.'/demo/identity-provider', $rootDir.'/demo/service-provider'] as $packageDir) {
+    echo PHP_EOL, '==> ', basename($packageDir), PHP_EOL;
 
-    if (0 !== analysePackage($rootDir, $repository['url'], $repositories)) {
-        $failedPackages[] = basename($repository['url']);
+    if (0 !== analysePackage($rootDir, $packageDir, $repositories)) {
+        $failedPackages[] = basename($packageDir);
     }
 }
 

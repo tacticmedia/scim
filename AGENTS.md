@@ -12,9 +12,10 @@ and `tacticmedia/scim-server-bundle`, its Symfony bundle. The support floor is P
 | `tests/scim-server/` | Library tests, namespace `TacticMedia\ScimServer\Tests\`. |
 | `tests/scim-server-bundle/` | Bundle tests, namespace `TacticMedia\ScimServerBundle\Tests\`. |
 | `tests/scim-server-bundle/Fixtures/TestKernel.php` | The smallest kernel that loads the bundle. `bin/console`, PHPStan, Rector and the functional tests use it. Its project directory is the repository root, so its cache is in `var/cache/test/`. It reads `DATABASE_URL`, default in-memory SQLite, see [docs/ci.md](docs/ci.md#running-the-tests-on-one-database). |
-| `demo/identity-provider/` | The demo identity provider, namespace `TacticMedia\ScimDemo\IdentityProvider\`. It provisions over SCIM as Entra ID, Okta and Keycloak do. |
-| `demo/service-provider/` | The demo service provider, namespace `TacticMedia\ScimDemo\ServiceProvider\`. It uses the bundle. |
-| `tests/demo/` | Demo tests, namespace `TacticMedia\ScimDemo\Tests\`. `EndToEnd/` starts the service provider with `php -S` and provisions it from the identity provider kernel in the environment `e2e`. |
+| `demo/identity-provider/` | The demo identity provider, namespace `TacticMedia\ScimDemo\IdentityProvider\`. It provisions over SCIM as Entra ID, Okta and Keycloak do. See [Demo applications](#demo-applications). |
+| `demo/service-provider/` | The demo service provider, namespace `TacticMedia\ScimDemo\ServiceProvider\`. It uses the bundle. See [Demo applications](#demo-applications). |
+| `demo/compose.yaml` | Runs the two demo applications with Docker Compose. |
+| `tests/demo/` | Demo tests, namespace `TacticMedia\ScimDemo\Tests\`. `EndToEnd/` starts the service provider with `php -S` through `EndToEnd/public/index.php` and provisions it from the identity provider kernel in the environment `e2e`. |
 | `bin/dependencies` | The dependency gate, see [Dependency gate](#dependency-gate). |
 | `.github/workflows/split.yml` | Pushes each package directory to its split repository, see [docs/release.md](docs/release.md). |
 
@@ -58,16 +59,31 @@ The bundle ships files for the coding agents of its consumers:
   their path below `vendor/tacticmedia/scim-server-bundle/`, in a code span.
 - When a change makes a step, a rule or an example of the skill wrong, change the skill in the same commit.
 
+## Demo applications
+
+`demo/identity-provider/` and `demo/service-provider/` are standalone Symfony applications. Each has its own
+`composer.json`, `composer.lock`, `.env` and `Dockerfile`, and deploys alone.
+
+- Composer installs the packages of a demo application from Packagist, not from the working copy. A demo change
+  that needs an unreleased package change passes the root tests, but the demo image gets it only after the release.
+- The root `autoload-dev` maps the demo namespaces, so the root tests, PHPStan and Rector use the root `vendor/` and
+  the working copy. The end-to-end test serves the service provider through `tests/demo/EndToEnd/public/index.php`
+  for the same reason.
+- `bin/console` and `public/index.php` of a demo application load only its own `vendor/`. Run them in Docker, or
+  after `composer install --working-dir=demo/<application>`.
+- Add a package that a demo application uses with `composer require --working-dir=demo/<application> <package>`.
+  When the root tests need it too, also add it to the root `require-dev`.
+
 ## Commands
 
 | Command | Result |
 | --- | --- |
 | `composer test`, `make test` | PHPUnit. |
-| `composer coverage` | PHPUnit with Xdebug coverage, then `bin/coverage`: it fails below 95 percent line coverage of the package and demo sources. |
+| `composer coverage` | PHPUnit with Xdebug coverage, then `bin/coverage`: it fails below 100 percent line coverage of the package and demo sources. |
 | `composer qa`, `make qa` | Rector, php-cs-fixer, the linters, the dependency gate, PHPStan and the coverage gate. It changes files. |
 | `composer qa:check`, `make qa-check` | The same gates. It changes no file. |
 | `make ci` | The CI workflow through act, see [docs/ci.md](docs/ci.md). |
-| `make demo` | Deletes and creates the demo databases, seeds the identity provider, then starts the service provider on port 8001 and the identity provider on port 8000. Ctrl-C stops both. See [demo/README.md](demo/README.md). |
+| `docker compose --file demo/compose.yaml up --build` | Builds the demo images, then starts the service provider on port 8001 and the identity provider on port 8000, each with a new database. Ctrl-C stops both. See [demo/README.md](demo/README.md). |
 | `bin/console` | The console of the test kernel, environment `test`, debug on. |
 
 The gates one at a time: `composer lint`, `composer dependencies`, `composer rector:check`, `composer cs:check`,
@@ -75,8 +91,8 @@ The gates one at a time: `composer lint`, `composer dependencies`, `composer rec
 
 ## Dependency gate
 
-`composer dependencies` runs `bin/dependencies`. For each path repository of the root `composer.json`, the
-script copies the package directory to `var/dependencies/<directory>/`, installs the copy, and runs
+`composer dependencies` runs `bin/dependencies`. For each path repository of the root `composer.json` and each demo
+application, the script copies the directory to `var/dependencies/<directory>/`, installs the copy, and runs
 composer-dependency-analyser against it. The analyser uses the vendor directory of the `composer.json` that it
 analyses, so it cannot use the root `vendor/`.
 
@@ -89,6 +105,10 @@ analyses, so it cannot use the root `vendor/`.
   installed copy does not have them.
 - `composer-dependency-analyser.scim-server.php` ignores unknown `Psr\Http\` and `Symfony\Bridge\PsrHttpMessage\`
   classes: the PSR-15 handler uses them, and their packages are in the `suggest` of the library.
+- The configuration of a demo application also scans its `config/`, `public/` and `bin/console`. It ignores as
+  unused the packages and extensions that no class name loads: the runtime, Dotenv, the PDO driver and the services
+  that framework configuration enables. The copy installs the packages from the path repositories, because a path
+  repository hides the Packagist versions.
 - The analyser fails while an ignore matches nothing. When `src/` no longer names a class of an ignored namespace,
   remove that ignore.
 

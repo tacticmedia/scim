@@ -165,7 +165,7 @@
         "coverage": [
             "@putenv XDEBUG_MODE=coverage",
             "phpunit --coverage-clover var/coverage/clover.xml",
-            "@php bin/coverage var/coverage/clover.xml 95"
+            "@php bin/coverage var/coverage/clover.xml 100"
         ],
         "cs": [
             "@pcs"
@@ -177,16 +177,22 @@
         "dev-scripts": [
             "([ $COMPOSER_DEV_MODE -eq 0 ] || composer normalize)",
             "([ $COMPOSER_DEV_MODE -eq 0 ] || composer normalize scim-server/composer.json)",
-            "([ $COMPOSER_DEV_MODE -eq 0 ] || composer normalize scim-server-bundle/composer.json)"
+            "([ $COMPOSER_DEV_MODE -eq 0 ] || composer normalize scim-server-bundle/composer.json)",
+            "([ $COMPOSER_DEV_MODE -eq 0 ] || composer normalize demo/identity-provider/composer.json)",
+            "([ $COMPOSER_DEV_MODE -eq 0 ] || composer normalize demo/service-provider/composer.json)"
         ],
         "lint": [
             "@composer validate --strict --no-check-all",
             "@composer validate --strict scim-server/composer.json",
             "@composer validate --strict scim-server-bundle/composer.json",
+            "@composer validate --strict demo/identity-provider/composer.json",
+            "@composer validate --strict demo/service-provider/composer.json",
             "@php bin/symfony-pin",
             "@composer normalize --dry-run --diff",
             "@composer normalize --dry-run --diff scim-server/composer.json",
             "@composer normalize --dry-run --diff scim-server-bundle/composer.json",
+            "@composer normalize --dry-run --diff demo/identity-provider/composer.json",
+            "@composer normalize --dry-run --diff demo/service-provider/composer.json",
             "@php bin/console lint:container"
         ],
         "pcs": "@php vendor/bin/php-cs-fixer fix",

@@ -5,7 +5,7 @@
 | Job | Runs on | Runs |
 | --- | --- | --- |
 | `qa` | `ubuntu-latest` with setup-php | actionlint over `.github/workflows/`, `composer audit`, then the composer scripts `lint`, `dependencies`, `rector:check`, `cs:check` and `stan`. |
-| `tests` | `ubuntu-latest` with setup-php and Xdebug | `composer install`, then `composer coverage`: PHPUnit with a Clover report, then `bin/coverage`, which fails below 95 percent line coverage. The tests use in-memory SQLite. |
+| `tests` | `ubuntu-latest` with setup-php and Xdebug | `composer install`, then `composer coverage`: PHPUnit with a Clover report, then `bin/coverage`, which fails below 100 percent line coverage. The tests use in-memory SQLite. |
 | `databases` | `ubuntu-latest` with setup-php, and one database service per matrix entry: PostgreSQL 18.6, MySQL 9.7.4 (LTS), MySQL 26.10.0 (Innovation), MariaDB 12.3.3 (LTS), MariaDB 13.0.2 | `composer install`, then `composer test` with `DATABASE_URL` set to the service. The data directory of the service is on tmpfs. No coverage. |
 | `lowest` | `ubuntu-latest` with setup-php | Sets each root `require-dev` constraint of a package that `scim-server/composer.json` or `scim-server-bundle/composer.json` requires or conflicts with to `*`, then `composer update --prefer-lowest --prefer-stable`, then `composer test`. The packages and the dev tools thus set the floors, not the root constraints that `bump-after-update` raises. |
 
@@ -81,7 +81,7 @@ your own needs the settings of [Database notes](../scim-server-bundle/docs/index
 
 - **Architecture.** The runner has the host's architecture, arm64 on Apple silicon. GitHub's `ubuntu-latest` is
   amd64.
-- **Runner image.** `catthehacker/ubuntu:act-24.04` is a subset of GitHub's `ubuntu-24.04`. A step that relies
+- **Runner image.** `catthehacker/ubuntu:act-26.04-dev` is a subset of GitHub's `ubuntu-26.04`. A step that relies
   on a tool GitHub preinstalls and the subset lacks fails locally only.
 - **Job order.** The jobs run one after the other. GitHub runs them in parallel.
 - **Matrix entries.** The entries of a matrix run one after the other in one workspace. GitHub runs them in
@@ -97,8 +97,8 @@ Nothing updates these pins automatically:
 
 | Pin | Where | Keep it at |
 | --- | --- | --- |
-| `docker:<version>-dind` | `.github/act/Dockerfile` | The `docker-ce` version in the toolset of the image that `ubuntu-latest` uses, now the [ubuntu 24.04 toolset](https://github.com/actions/runner-images/blob/main/images/ubuntu/toolsets/toolset-2404.json). |
-| `catthehacker/ubuntu:act-<version>` | `.github/act/actrc` | The Ubuntu version that `ubuntu-latest` uses, now 24.04. |
+| `docker:<version>-dind` | `.github/act/Dockerfile` | The `docker-ce` version in the toolset of the image that `ubuntu-latest` uses, now the [ubuntu 26.04 toolset](https://github.com/actions/runner-images/blob/main/images/ubuntu/toolsets/toolset-2604.json). When that version has no `dind` image, the nearest patch release that has one. |
+| `catthehacker/ubuntu:act-<version>` | `.github/act/actrc` | The Ubuntu version that `ubuntu-latest` uses, now 26.04. catthehacker publishes it only as `act-26.04-dev`. Use `act-26.04` when it exists. |
 | `ACT_VERSION` | `.github/act/Dockerfile` | The latest act release. |
 | `rhysd/actionlint:<version>` | `.github/act/run.sh` and `.github/workflows/ci.yaml` | The same release in both. |
 | `postgres:<version>` | `databases` matrix in `.github/workflows/ci.yaml` | The latest PostgreSQL release. |

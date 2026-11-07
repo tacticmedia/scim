@@ -1,8 +1,9 @@
 # syntax=docker/dockerfile:1
 
 # The local stand-in for a GitHub-hosted runner: a private Docker daemon with act beside it
-# ({@see docs/ci.md}). The daemon is the docker-ce version GitHub's ubuntu-24.04 image pins.
-FROM docker:28.0.4-dind
+# ({@see docs/ci.md}). The daemon is the docker-ce version GitHub's ubuntu-26.04 image pins, 29.4.2, which has no
+# dind image; 29.4.3 is the nearest.
+FROM docker:29.4.3-dind
 
 ARG ACT_VERSION=0.2.97
 ARG TARGETARCH

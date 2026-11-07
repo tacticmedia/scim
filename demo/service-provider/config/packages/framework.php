@@ -6,7 +6,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return [
     'framework' => [
-        'secret' => 'scim-demo-service-provider',
+        'secret' => '%env(APP_SECRET)%',
     ],
     'when@test' => [
         'framework' => [

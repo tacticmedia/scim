@@ -6,7 +6,7 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 return [
     'framework' => [
-        'secret' => 'scim-demo-identity-provider',
+        'secret' => '%env(APP_SECRET)%',
         'csrf_protection' => true,
         'form' => true,
         'validation' => true,

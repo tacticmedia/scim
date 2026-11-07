@@ -33,6 +33,12 @@ Versions are lock-step. One monorepo tag releases both packages with the same ve
    workflow does not run for a tag that starts with `v`.
 4. Push the tag.
 5. The workflow pushes the tag to both split repositories. Packagist reads the tag through its GitHub hook.
+6. When Packagist shows the version, move the demo service provider to it, then commit
+   `demo/service-provider/composer.json` and `demo/service-provider/composer.lock`:
+
+   ```
+   composer require --working-dir=demo/service-provider tacticmedia/scim-server:^X.Y.Z tacticmedia/scim-server-bundle:^X.Y.Z
+   ```
 
 ## Set up
 

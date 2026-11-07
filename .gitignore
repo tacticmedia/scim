@@ -16,8 +16,4 @@ phpstan.neon
 /.phpunit.cache/
 ###< phpunit/phpunit ###
 /.idea/scim.iml
-
-###> demo ###
-/demo/*/var/
-###< demo ###
 /.component-slop-audit-for-symfony

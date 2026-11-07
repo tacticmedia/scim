@@ -2,14 +2,8 @@
 
 declare(strict_types=1);
 
-use Symfony\Component\HttpFoundation\Request;
 use TacticMedia\ScimDemo\IdentityProvider\Kernel;
 
-require dirname(__DIR__, 3).'/vendor/autoload.php';
+require_once dirname(__DIR__).'/vendor/autoload_runtime.php';
 
-$environment = $_SERVER['APP_ENV'] ?? 'dev';
-$kernel = new Kernel($environment, 'prod' !== $environment);
-$request = Request::createFromGlobals();
-$response = $kernel->handle($request);
-$response->send();
-$kernel->terminate($request, $response);
+return static fn (array $context): Kernel => new Kernel($context['APP_ENV'], (bool) $context['APP_DEBUG']);

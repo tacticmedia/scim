@@ -1,7 +1,7 @@
 # Demo service provider
 
-This application is a SCIM service provider (SP). It uses `tacticmedia/scim-server-bundle` as
-[the bundle documentation](../../scim-server-bundle/docs/index.md) tells an application to use it. An identity
+This application is a SCIM service provider (SP). It installs `tacticmedia/scim-server-bundle` from Packagist and
+uses it as [the bundle documentation](../../scim-server-bundle/docs/index.md) tells an application to use it. An identity
 provider, for example the fake identity provider in `demo/identity-provider/`, creates, changes and deletes its users
 and groups through SCIM.
 
@@ -13,25 +13,23 @@ The SP is development tooling. It does not ship.
 
 ## Run it
 
-Run all commands from the repository root. Install the root dependencies with `composer install` first.
+Run the commands from the repository root. [The demo README](../README.md) starts the SP together with the identity
+provider. To start the SP alone:
 
-1. Create the database. The file is `demo/service-provider/var/service-provider.sqlite`.
+```
+docker compose --file demo/compose.yaml up --build service-provider
+```
 
-   ```
-   php demo/service-provider/bin/console doctrine:schema:create
-   ```
+Each start of the container creates the database again. Open http://127.0.0.1:8001, then provision from the identity
+provider. See `demo/identity-provider/README.md`.
 
-2. Start the SP on port 8001:
+## Deploy
 
-   ```
-   php -S 127.0.0.1:8001 -t demo/service-provider/public
-   ```
+`docker build demo/service-provider` makes an image that serves the SP with `php -S` on port 8001 in the environment
+`prod`. Set `APP_SECRET`, because the value in `.env` is public, and `SCIM_TOKEN`.
 
-3. Open http://127.0.0.1:8001.
-
-4. Start the identity provider on port 8000 and provision. See `demo/identity-provider/README.md`.
-
-To start again, delete `demo/service-provider/var/service-provider.sqlite` and repeat step 1.
+Without Docker, `composer install` in `demo/service-provider/` installs the SP. Its `bin/console` and
+`public/index.php` use only that `vendor/`.
 
 ## SCIM endpoint
 
@@ -58,7 +56,8 @@ The environment variables give the configuration:
 | `DATABASE_PATH` | `demo/service-provider/var/service-provider.sqlite` | The SQLite file. Use an absolute path: `php -S` runs the SP in `demo/service-provider/public/`. |
 | `SCIM_TOKEN` | `demo-token` | The token that the SP accepts. It is the default token of the identity provider. |
 
-Example: `SCIM_TOKEN=other-token php -S 127.0.0.1:8001 -t demo/service-provider/public`.
+Example: `SCIM_TOKEN=other-token docker compose --file demo/compose.yaml up --build`. Compose gives the token to the
+identity provider too.
 
 PHP must use `date.timezone = UTC`. This is the PHP default.
 
@@ -89,7 +88,7 @@ The SP shows these bundle features:
 `bin/console debug:scim` shows the mappings:
 
 ```
-php demo/service-provider/bin/console debug:scim
+docker compose --file demo/compose.yaml exec service-provider bin/console debug:scim
 ```
 
 ## Tests

@@ -1,0 +1,17 @@
+name: scim-demo
+
+services:
+  service-provider:
+    build: service-provider
+    ports:
+      - 127.0.0.1:8001:8001
+    environment:
+      - SCIM_TOKEN
+  identity-provider:
+    build: identity-provider
+    ports:
+      - 127.0.0.1:8000:8000
+    environment:
+      - SCIM_BASE_URL=http://service-provider:8001/scim/v2
+      - SCIM_TOKEN
+      - SCIM_DIALECT

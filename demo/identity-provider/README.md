@@ -9,47 +9,43 @@ The IdP is development tooling. It does not ship.
 
 ## Run it
 
-Run all commands from the repository root. Install the root dependencies with `composer install` first.
+Run the commands from the repository root. [The demo README](../README.md) starts the IdP together with the SP. To
+start the IdP alone:
 
-1. Create the database. The file is `demo/identity-provider/var/identity-provider.sqlite`.
+```
+docker compose --file demo/compose.yaml up --build identity-provider
+```
 
-   ```
-   php demo/identity-provider/bin/console doctrine:schema:create
-   ```
+Each start of the container creates the database `var/identity-provider.sqlite` again and seeds the sample directory:
+6 users in a manager chain, the group "Engineering" and the group "Platform Team". The members of "Platform Team" are
+a subset of the members of "Engineering". To start again, restart the container.
 
-2. Create the sample directory: 6 users in a manager chain, the group "Engineering" and the group "Platform Team".
-   The members of "Platform Team" are a subset of the members of "Engineering".
-
-   ```
-   php demo/identity-provider/bin/console idp:seed
-   ```
-
-3. Start the SP on port 8001. Then start the IdP on port 8000:
-
-   ```
-   php -S 127.0.0.1:8000 -t demo/identity-provider/public
-   ```
-
-4. Open http://127.0.0.1:8000. Each change in the UI saves to the directory first. Then the IdP provisions the change
+1. Open http://127.0.0.1:8000. Each change in the UI saves to the directory first. Then the IdP provisions the change
    immediately and shows the result. A provisioning failure does not remove the local change.
 
    A delete is different: the IdP deletes a provisioned user or group at the SP first. It deletes the local copy only
    when the SP confirms. After a failure, the user or group and its SCIM id stay, and the next "Delete" sends the
    request again.
 
-5. Click "Provision everything" for a full cycle: every user, then every group. Or run:
+2. Click "Provision everything" for a full cycle: every user, then every group. Or run:
 
    ```
-   php demo/identity-provider/bin/console idp:provision
+   docker compose --file demo/compose.yaml exec identity-provider bin/console idp:provision
    ```
 
    The command prints each request line and its status.
 
-6. Open "Provisioning log". It shows each request and response. The log does not show the token.
+3. Open "Provisioning log". It shows each request and response. The log does not show the token.
 
-7. Open "Import" to read the users of the SP page by page. See [Import](#import).
+4. Open "Import" to read the users of the SP page by page. See [Import](#import).
 
-To start again, delete `demo/identity-provider/var/identity-provider.sqlite` and repeat steps 1 and 2.
+## Deploy
+
+`docker build demo/identity-provider` makes an image that serves the IdP with `php -S` on port 8000 in the
+environment `prod`. Set `APP_SECRET`, because the value in `.env` is public, and the variables below.
+
+Without Docker, `composer install` in `demo/identity-provider/` installs the IdP. Its `bin/console` and
+`public/index.php` use only that `vendor/`.
 
 ## Configure the service provider
 
@@ -57,11 +53,11 @@ The environment variables give the start values:
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `SCIM_BASE_URL` | `http://127.0.0.1:8001/scim/v2` | The SCIM base URL of the SP. The IdP appends `/Users` and `/Groups`. |
+| `SCIM_BASE_URL` | `http://127.0.0.1:8001/scim/v2` | The SCIM base URL of the SP. The IdP appends `/Users` and `/Groups`. `demo/compose.yaml` sets `http://service-provider:8001/scim/v2`. |
 | `SCIM_TOKEN` | `demo-token` | The token that the IdP sends. |
 | `SCIM_DIALECT` | `entra` | `entra`, `entra-flag`, `okta` or `keycloak`. |
 
-Example: `SCIM_DIALECT=okta php -S 127.0.0.1:8000 -t demo/identity-provider/public`.
+Example: `SCIM_DIALECT=okta docker compose --file demo/compose.yaml up --build`.
 
 The "Settings" page changes the same values. After you save the page, the stored values replace the environment
 variables.
@@ -105,7 +101,7 @@ order of their creation.
 command does the same:
 
 ```
-php demo/identity-provider/bin/console idp:import --count=2
+docker compose --file demo/compose.yaml exec identity-provider bin/console idp:import --count=2
 ```
 
 | Dialect | Requests |
