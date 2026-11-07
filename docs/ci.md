@@ -13,6 +13,9 @@ All jobs install the PHP extensions of the `ext-*` entries in `composer.json`. T
 the PDO driver of its database from the matrix. `composer.json` does not list `ext-pdo_pgsql` and `ext-pdo_mysql`,
 so that `composer install` works without them.
 
+setup-php installs the production `php.ini`, which sets `zend.assertions = -1`. `composer test` and
+`composer coverage` start PHPUnit with `-d zend.assertions=1`, so each job runs the `assert()` calls.
+
 The gates `lint`, `dependencies`, `rector:check`, `cs:check`, `stan` and `coverage` are composer scripts, so
 `make qa-check` runs them too. actionlint and `composer audit` run only in the workflow, and `make ci` runs them locally. Add each
 new gate to `composer.json` as a script. Then call the script from the workflow.
@@ -32,19 +35,22 @@ directory name, `ACT_PROJECT`, names everything below, so checkouts in directori
 separate runners.
 
 1. actionlint over `.github/workflows/`.
-2. Starts the runner, compose project `<repository>-act` from `.github/act/compose.yaml`: one privileged
-   `docker:dind` container with [act](https://github.com/nektos/act) installed. The jobs get a Docker daemon of
-   their own, so they do not change the host daemon.
+2. Builds the image of the runner, compose project `<repository>-act` from `.github/act/compose.yaml`: one
+   privileged `docker:dind` container with [act](https://github.com/nektos/act) installed. The jobs get a Docker
+   daemon of their own, so they do not change the host daemon.
 3. For each job of `.github/workflows/ci.yaml`, in workflow order:
-   1. Copies a snapshot of the working tree into the workspace, a volume at GitHub's path
+   1. Starts the runner when it is not running, and waits until it is healthy. A Docker engine restart stops the
+      runner at any time. When the runner stops before it is healthy, `run.sh` tries again, up to 6 attempts,
+      10 seconds apart. A job that is running when the runner stops fails.
+   2. Copies a snapshot of the working tree into the workspace, a volume at GitHub's path
       `/home/runner/work/<repository>/<repository>`. The snapshot is what `git add --all` would commit:
       untracked files are in it, ignored files are not. The snapshot does not change the index or HEAD of the
       checkout. The snapshot gets the checkout's `origin` remote when the checkout has one.
-   2. Removes every container, volume and network from the runner's daemon. Images stay.
-   3. Deletes the `needs:` lines from the snapshot's workflow. act runs a job's needs as part of that job, in the
+   3. Removes every container, volume and network from the runner's daemon. Images stay.
+   4. Deletes the `needs:` lines from the snapshot's workflow. act runs a job's needs as part of that job, in the
       same workspace and daemon, which GitHub never does. Adds `max-parallel: 1` to each `strategy:`
       ([Where it differs from GitHub](#where-it-differs-from-github)).
-   4. Runs act for that job with the event in `.github/act/event.json`, a push to `main`.
+   5. Runs act for that job with the event in `.github/act/event.json`, a push to `main`.
 4. Prints the jobs that passed and failed, and exits non-zero if any failed.
 
 `run.sh` reads `HEAD` for the snapshot, so the repository needs at least one commit.

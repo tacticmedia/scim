@@ -13,6 +13,9 @@ services:
       - docker:/var/lib/docker
       - act:/root/.cache
       - workspace:/home/runner/work/${ACT_PROJECT:?}/${ACT_PROJECT:?}
+    # After an unclean stop, the containerd pid file in /run can name a live process, and dockerd does not start.
+    tmpfs:
+      - /run
     healthcheck:
       test: ["CMD", "docker", "info"]
       interval: 2s

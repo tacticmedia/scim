@@ -164,7 +164,7 @@
         ],
         "coverage": [
             "@putenv XDEBUG_MODE=coverage",
-            "phpunit --coverage-clover var/coverage/clover.xml",
+            "@php -d zend.assertions=1 vendor/bin/phpunit --coverage-clover var/coverage/clover.xml",
             "@php bin/coverage var/coverage/clover.xml 100"
         ],
         "cs": [
@@ -222,6 +222,6 @@
             "@php vendor/bin/rector --dry-run"
         ],
         "stan": "bin/phpstan",
-        "test": "phpunit"
+        "test": "@php -d zend.assertions=1 vendor/bin/phpunit"
     }
 }

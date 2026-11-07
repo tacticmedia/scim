@@ -40,6 +40,18 @@ snapshot() {
         && git -c user.name=act -c user.email=act@localhost commit --quiet --message='Working tree snapshot'"
 }
 
+# A Docker engine restart stops the runner at any time, also while `up --wait` waits for it. `up` starts a stopped
+# runner, and recreates it when its image changed.
+start_runner() {
+    attempt=1
+    until runner_compose up --detach --wait runner; do
+        [ "$attempt" -lt 6 ] || return 1
+        attempt=$((attempt + 1))
+        echo "The runner did not start. Attempt $attempt of 6 in 10 seconds." >&2
+        sleep 10
+    done
+}
+
 reset_daemon() {
     runner sh -c 'docker ps --all --quiet | xargs -r docker rm --force --volumes >/dev/null
         docker volume prune --all --force >/dev/null
@@ -50,7 +62,7 @@ docker run --rm --volume "$root:/repo:ro" --workdir /repo rhysd/actionlint:1.7.1
 
 mkdir -p "$logs"
 rm -f "$logs"/*.log "$logs"/*.status
-runner_compose up --detach --build --wait runner
+runner_compose build runner
 
 if [ $# -eq 0 ]; then
     # act --list orders jobs unpredictably; the workflow's own order reads better and is stable.
@@ -62,6 +74,7 @@ passed=
 failed=
 for job in "$@"; do
     printf '\n==> %s\n' "$job"
+    start_runner
     snapshot
     reset_daemon
     # act runs a job's needs in the same workspace and daemon; this loop runs each job on its own.

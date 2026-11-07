@@ -94,8 +94,8 @@ writes it to `var/site/`.
 
 | Command | Result |
 | --- | --- |
-| `composer test`, `make test` | PHPUnit. |
-| `composer coverage` | PHPUnit with Xdebug coverage, then `bin/coverage`: it fails below 100 percent line coverage of the package and demo sources. |
+| `composer test`, `make test` | PHPUnit with `zend.assertions=1`. A production `php.ini`, as setup-php installs on CI, compiles `assert()` out. |
+| `composer coverage` | PHPUnit with `zend.assertions=1` and Xdebug coverage, then `bin/coverage`: it fails below 100 percent line coverage of the package and demo sources. Without assertions, each `assert()` line counts as not covered. |
 | `composer qa`, `make qa` | Rector, php-cs-fixer, the linters, the dependency gate, PHPStan and the coverage gate. It changes files. |
 | `composer qa:check`, `make qa-check` | The same gates. It changes no file. |
 | `make ci` | The CI workflow through act, see [docs/ci.md](docs/ci.md). |
