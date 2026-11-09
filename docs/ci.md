@@ -39,9 +39,7 @@ separate runners.
    privileged `docker:dind` container with [act](https://github.com/nektos/act) installed. The jobs get a Docker
    daemon of their own, so they do not change the host daemon.
 3. For each job of `.github/workflows/ci.yaml`, in workflow order:
-   1. Starts the runner when it is not running, and waits until it is healthy. A Docker engine restart stops the
-      runner at any time. When the runner stops before it is healthy, `run.sh` tries again, up to 6 attempts,
-      10 seconds apart. A job that is running when the runner stops fails.
+   1. Starts the runner when it is not running, and waits until it is healthy.
    2. Copies a snapshot of the working tree into the workspace, a volume at GitHub's path
       `/home/runner/work/<repository>/<repository>`. The snapshot is what `git add --all` would commit:
       untracked files are in it, ignored files are not. The snapshot does not change the index or HEAD of the
@@ -51,6 +49,11 @@ separate runners.
       same workspace and daemon, which GitHub never does. Adds `max-parallel: 1` to each `strategy:`
       ([Where it differs from GitHub](#where-it-differs-from-github)).
    5. Runs act for that job with the event in `.github/act/event.json`, a push to `main`.
+
+   A Docker engine restart stops the runner at any time. When the runner stops during steps 1 to 4, `run.sh`
+   does them again from step 1, up to 6 attempts, 10 seconds apart. When one of these steps fails while the
+   runner runs, `run.sh` stops. A job that is running when the runner stops fails, and the next job starts the
+   runner again.
 4. Prints the jobs that passed and failed, and exits non-zero if any failed.
 
 `run.sh` reads `HEAD` for the snapshot, so the repository needs at least one commit.
