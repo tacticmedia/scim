@@ -8,12 +8,14 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\TestDox;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Clock\MockClock;
 use TacticMedia\ScimServer\Patch\DeltaSplit;
 use TacticMedia\ScimServer\Patch\DeltaSplitter;
 use TacticMedia\ScimServer\Patch\PatchOperation;
 use TacticMedia\ScimServer\Patch\PatchOperationType;
 use TacticMedia\ScimServer\Patch\PatchRequest;
 use TacticMedia\ScimServer\Path\AttributePath;
+use TacticMedia\ScimServer\Repository\InMemoryResourceRepository;
 use TacticMedia\ScimServer\Repository\ValuesStep;
 use TacticMedia\ScimServer\Schema\AttributeDefinition;
 use TacticMedia\ScimServer\Schema\AttributeType;
@@ -22,6 +24,7 @@ use TacticMedia\ScimServer\Schema\CoreSchemas;
 use TacticMedia\ScimServer\Schema\ResourceType;
 use TacticMedia\ScimServer\Schema\Schema;
 use TacticMedia\ScimServer\Schema\SchemaExtension;
+use TacticMedia\ScimServer\Tests\Server\Fixtures\MemberDeltaRepository;
 
 final class DeltaSplitterTest extends KernelTestCase
 {
@@ -64,7 +67,7 @@ final class DeltaSplitterTest extends KernelTestCase
     #[TestDox('$_dataName becomes steps')]
     public function splitsMemberOperations(array $operations, array $steps): void
     {
-        self::assertEquals(new DeltaSplit([], $steps, [self::members()]), $this->split($operations));
+        self::assertEquals(new DeltaSplit([], $steps, [self::members()], $this->repository([self::members()])), $this->split($operations));
     }
 
     #[Test]
@@ -81,6 +84,7 @@ final class DeltaSplitterTest extends KernelTestCase
             [0 => new PatchOperation(PatchOperationType::Replace, null, ['id' => 'g1', 'displayName' => 'Tour Guides']), 2 => new PatchOperation(PatchOperationType::Replace, 'externalId', 'e1')],
             [self::step('add', [['value' => 'm1']])],
             [self::members()],
+            $this->repository([self::members()]),
         ), $split);
     }
 
@@ -140,7 +144,7 @@ final class DeltaSplitterTest extends KernelTestCase
     {
         $this->expectExceptionObject(new \LogicException(\sprintf('The DeltaRepository of the resource type %s names "%s", which is not a multi-valued, complex, readWrite and optional attribute with a "value" and without a "primary" sub-attribute.', $type->name, $named)));
 
-        new DeltaSplitter()->split(new PatchRequest([new PatchOperation(PatchOperationType::Remove, 'externalId')]), $type, [$path]);
+        new DeltaSplitter()->split(new PatchRequest([new PatchOperation(PatchOperationType::Remove, 'externalId')]), $type, $this->repository([$path]));
     }
 
     #[Test]
@@ -148,15 +152,16 @@ final class DeltaSplitterTest extends KernelTestCase
     public function splitsExtensionAttribute(): void
     {
         $owners = new AttributePath(self::TEAM, 'owners');
+        $repository = $this->repository([$owners]);
         $splitter = new DeltaSplitter();
         $request = static fn (PatchOperation $operation): PatchRequest => new PatchRequest([$operation]);
 
         self::assertEquals(
-            new DeltaSplit([], [new ValuesStep($owners, PatchOperationType::Add, [['value' => 'u1']])], [$owners]),
-            $splitter->split($request(new PatchOperation(PatchOperationType::Add, self::TEAM.':owners', 'u1')), self::teamType(), [$owners]),
+            new DeltaSplit([], [new ValuesStep($owners, PatchOperationType::Add, [['value' => 'u1']])], [$owners], $repository),
+            $splitter->split($request(new PatchOperation(PatchOperationType::Add, self::TEAM.':owners', 'u1')), self::teamType(), $repository),
         );
-        self::assertNull($splitter->split($request(new PatchOperation(PatchOperationType::Add, self::TEAM, ['owners' => 'u1'])), self::teamType(), [$owners]));
-        self::assertNull($splitter->split($request(new PatchOperation(PatchOperationType::Remove, self::TEAM)), self::teamType(), [$owners]));
+        self::assertNull($splitter->split($request(new PatchOperation(PatchOperationType::Add, self::TEAM, ['owners' => 'u1'])), self::teamType(), $repository));
+        self::assertNull($splitter->split($request(new PatchOperation(PatchOperationType::Remove, self::TEAM)), self::teamType(), $repository));
     }
 
     /**
@@ -167,7 +172,15 @@ final class DeltaSplitterTest extends KernelTestCase
     {
         $request = PatchRequest::fromArray(['schemas' => ['urn:ietf:params:scim:api:messages:2.0:PatchOp'], 'Operations' => $operations]);
 
-        return new DeltaSplitter()->split($request, CoreResourceTypes::group(), $deltaAttributes ?? [self::members()]);
+        return new DeltaSplitter()->split($request, CoreResourceTypes::group(), $this->repository($deltaAttributes ?? [self::members()]));
+    }
+
+    /**
+     * @param list<AttributePath> $deltaAttributes
+     */
+    private function repository(array $deltaAttributes): MemberDeltaRepository
+    {
+        return new MemberDeltaRepository(new InMemoryResourceRepository(CoreResourceTypes::group(), new MockClock('2026-11-05T10:00:00Z')), $deltaAttributes);
     }
 
     private static function members(): AttributePath

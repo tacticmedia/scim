@@ -94,8 +94,7 @@ final readonly class MeConfigurationCheck
         }
 
         $path = AttributePath::parse($attribute) ?? throw ScimException::invalidFilter(\sprintf('"%s" is not an attribute path.', $attribute));
-        $comparison = $this->filters->resolve(new Comparison($path, ComparisonOperator::Equal, '<user identifier>'), $type);
-        \assert($comparison instanceof Comparison);
+        $comparison = $this->filters->resolveComparison(new Comparison($path, ComparisonOperator::Equal, '<user identifier>'), $type);
 
         if (\in_array($type->name, $mappings->names(), true)) {
             $this->plan($mappings->get($type->name), $comparison->path, $mappings);

@@ -116,6 +116,19 @@ final class MappingPassTest extends KernelTestCase
         $this->configured(['resources' => ['App\\Entity\\Missing', NoScimResource::class]]);
     }
 
+    #[Test]
+    #[TestDox('A resource tag on a service whose class does not exist fails the build')]
+    public function missingTaggedClassFailsTheBuild(): void
+    {
+        $container = $this->container([]);
+        $container->register('app.missing', 'App\\Entity\\Missing')->addResourceTag(MappingPass::RESOURCE_TAG);
+
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessageIsOrContains('App\\Entity\\Missing: the class of the service "app.missing" does not exist. Correct the class of the service, or remove its tacticmedia_scim_server.resource tag.');
+
+        $container->compile(true);
+    }
+
     /**
      * The extension types the parameter with its value in the test kernel, which another container does not share.
      */
@@ -138,6 +151,22 @@ final class MappingPassTest extends KernelTestCase
      */
     private function configured(array $config, string ...$classes): ContainerBuilder
     {
+        $container = $this->container($config);
+
+        foreach ($classes as $class) {
+            $container->register($class, $class)->setAutoconfigured(true);
+        }
+
+        $container->compile(true);
+
+        return $container;
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    private function container(array $config): ContainerBuilder
+    {
         $container = new ContainerBuilder();
         $bundle = new TacticMediaScimServerBundle();
         $bundle->build($container);
@@ -146,12 +175,6 @@ final class MappingPassTest extends KernelTestCase
         self::assertNotNull($extension);
         $container->registerExtension($extension);
         $container->loadFromExtension($extension->getAlias(), $config);
-
-        foreach ($classes as $class) {
-            $container->register($class, $class)->setAutoconfigured(true);
-        }
-
-        $container->compile(true);
 
         return $container;
     }

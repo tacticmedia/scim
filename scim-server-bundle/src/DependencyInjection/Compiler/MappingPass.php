@@ -93,15 +93,16 @@ final readonly class MappingPass implements CompilerPassInterface
      * @param list<class-string> $configured
      *
      * @return list<class-string>
+     *
+     * @throws MappingException for a tagged service whose class does not exist
      */
     private function classes(ContainerBuilder $container, array $configured): array
     {
         $classes = [];
 
         foreach (array_keys($container->findTaggedResourceIds(self::RESOURCE_TAG, false)) as $id) {
-            $class = $container->getParameterBag()->resolveValue($container->getDefinition($id)->getClass() ?? $id);
-            \assert(\is_string($class) && class_exists($class));
-            $classes[] = $class;
+            $class = $container->getDefinition($id)->getClass() ?? $id;
+            $classes[] = ($container->getReflectionClass($class) ?? throw new MappingException([\sprintf('%s: the class of the service "%s" does not exist. Correct the class of the service, or remove its %s tag.', $class, $id, self::RESOURCE_TAG)]))->getName();
         }
 
         return array_values(array_unique([...$classes, ...$configured]));

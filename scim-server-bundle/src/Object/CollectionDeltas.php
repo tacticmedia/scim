@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace TacticMedia\ScimServerBundle\Object;
 
-use Symfony\Component\DependencyInjection\ServiceLocator;
 use TacticMedia\ScimServer\Exception\ScimException;
 use TacticMedia\ScimServer\Patch\PatchOperationType;
 use TacticMedia\ScimServer\Path\AttributePath;
@@ -15,8 +14,6 @@ use TacticMedia\ScimServer\Schema\AttributeType;
 use TacticMedia\ScimServer\Schema\Mutability;
 use TacticMedia\ScimServerBundle\Converter\ConversionContext;
 use TacticMedia\ScimServerBundle\Converter\ConversionFailed;
-use TacticMedia\ScimServerBundle\Converter\IdConverter;
-use TacticMedia\ScimServerBundle\Converter\ValueConverter;
 use TacticMedia\ScimServerBundle\Mapping\AttributeMapping;
 use TacticMedia\ScimServerBundle\Mapping\MappingKind;
 use TacticMedia\ScimServerBundle\Mapping\ResourceMapping;
@@ -31,12 +28,9 @@ use TacticMedia\ScimServerBundle\Mapping\ResourceMapping;
  */
 final readonly class CollectionDeltas
 {
-    /**
-     * @param ServiceLocator<mixed> $converters ValueConverter services by class name
-     */
     public function __construct(
         private References $references,
-        private ServiceLocator $converters,
+        private MemberValues $values,
     ) {
     }
 
@@ -199,8 +193,7 @@ final readonly class CollectionDeltas
 
     private function canonical(ResourceMapping $target, string $id): ?string
     {
-        $converter = $this->converters->get($target->id->converter ?? IdConverter::class);
-        \assert($converter instanceof ValueConverter);
+        $converter = $this->values->converter($target, $target->id);
         $context = new ConversionContext($target, $target->id);
 
         try {

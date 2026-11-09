@@ -90,6 +90,19 @@ final class RepositoryPassTest extends KernelTestCase
         $this->compile([], [], TenantUser::class, TenantGroup::class);
     }
 
+    #[Test]
+    #[TestDox('A repository tag on a service whose class does not exist fails the build')]
+    public function missingRepositoryClassFailsTheBuild(): void
+    {
+        $container = $this->container([], []);
+        $container->register('app.missing_repository', 'App\\Scim\\MissingRepository')->addTag(RepositoryPass::REPOSITORY_TAG);
+
+        $this->expectException(MappingException::class);
+        $this->expectExceptionMessageIsOrContains('App\\Scim\\MissingRepository: the class of the service "app.missing_repository" does not exist. Correct the class of the service, or remove its tacticmedia_scim_server.repository tag.');
+
+        $container->compile(true);
+    }
+
     /**
      * @param array<string, mixed> $config
      * @param array<string, mixed> $parameters
@@ -97,18 +110,9 @@ final class RepositoryPassTest extends KernelTestCase
      */
     private function compile(array $config, array $parameters, string ...$classes): RecordingPass
     {
-        $container = new ContainerBuilder();
-        $container->getParameterBag()->add($parameters);
-        $bundle = new TacticMediaScimServerBundle();
-        $bundle->build($container);
-
+        $container = $this->container($config, $parameters);
         $recorder = new RecordingPass();
         $container->addCompilerPass($recorder, priority: -10);
-
-        $extension = $bundle->getContainerExtension();
-        self::assertNotNull($extension);
-        $container->registerExtension($extension);
-        $container->loadFromExtension($extension->getAlias(), $config);
 
         foreach ($classes as $class) {
             $container->register($class, $class)->setAutoconfigured(true);
@@ -117,6 +121,25 @@ final class RepositoryPassTest extends KernelTestCase
         $container->compile(true);
 
         return $recorder;
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     * @param array<string, mixed> $parameters
+     */
+    private function container(array $config, array $parameters): ContainerBuilder
+    {
+        $container = new ContainerBuilder();
+        $container->getParameterBag()->add($parameters);
+        $bundle = new TacticMediaScimServerBundle();
+        $bundle->build($container);
+
+        $extension = $bundle->getContainerExtension();
+        self::assertNotNull($extension);
+        $container->registerExtension($extension);
+        $container->loadFromExtension($extension->getAlias(), $config);
+
+        return $container;
     }
 
     /**

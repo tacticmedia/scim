@@ -24,6 +24,7 @@ use TacticMedia\ScimServer\Repository\PatchResult;
 use TacticMedia\ScimServer\Repository\ResourcePatch;
 use TacticMedia\ScimServer\Repository\ValuesChange;
 use TacticMedia\ScimServer\Repository\ValuesStep;
+use TacticMedia\ScimServerBundle\Object\CollectionDeltaStore;
 use TacticMedia\ScimServerBundle\Object\DocumentMapper;
 use TacticMedia\ScimServerBundle\Object\Instantiator;
 use TacticMedia\ScimServerBundle\Object\ObjectResourceRepository;
@@ -78,14 +79,19 @@ final class ObjectResourceRepositoryDeltaTest extends KernelTestCase
         $users = self::getContainer()->get('test.tacticmedia_scim_server.repository.user');
         self::assertInstanceOf(UserRepositoryDecorator::class, $users->inner);
         self::assertInstanceOf(ObjectResourceRepository::class, $users->inner->inner);
-        $mappings = self::mappings(['User' => Account::class, 'Group' => Team::class]);
-        $stores = new ServiceLocator([ArrayObjectStore::class => static fn (): ArrayObjectStore => new ArrayObjectStore()]);
-        $mapper = new DocumentMapper($mappings, self::converters(), $stores);
-        $teams = new ObjectResourceRepository('Group', $mappings, new QueryPlanner($mappings, self::converters()), $mapper, new Instantiator(new ServiceLocator([]), $mapper), $stores, self::converters());
 
         self::assertEquals([$this->members], self::deltaGroups()->deltaAttributes());
         self::assertSame([], $users->inner->inner->deltaAttributes());
-        self::assertSame([], $teams->deltaAttributes());
+        self::assertSame([], $this->arrayTeams()->deltaAttributes());
+    }
+
+    #[Test]
+    #[TestDox('patch() over a store without the capability is a LogicException')]
+    public function patchNeedsDeltaStore(): void
+    {
+        $this->expectExceptionObject(new \LogicException(\sprintf('patch() needs a %s, and the store of the resource type Group is a %s.', CollectionDeltaStore::class, ArrayObjectStore::class)));
+
+        $this->arrayTeams()->patch('t1', new ResourcePatch(null, [], null));
     }
 
     #[Test]
@@ -294,6 +300,15 @@ final class ObjectResourceRepositoryDeltaTest extends KernelTestCase
     private function patch(Group $group, ?array $document, ValuesStep ...$steps): PatchResult
     {
         return self::deltaGroups()->patch($this->id($group), new ResourcePatch($document, array_values($steps), null));
+    }
+
+    private function arrayTeams(): ObjectResourceRepository
+    {
+        $mappings = self::mappings(['User' => Account::class, 'Group' => Team::class]);
+        $stores = new ServiceLocator([ArrayObjectStore::class => static fn (): ArrayObjectStore => new ArrayObjectStore()]);
+        $mapper = new DocumentMapper($mappings, self::converters(), $stores);
+
+        return new ObjectResourceRepository('Group', $mappings, new QueryPlanner($mappings, self::converters()), $mapper, new Instantiator(new ServiceLocator([]), $mapper), $stores, self::converters());
     }
 
     /**

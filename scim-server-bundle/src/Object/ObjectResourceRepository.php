@@ -54,7 +54,7 @@ final readonly class ObjectResourceRepository implements CursorPaginatedReposito
     ) {
         $this->values = new MemberValues($converters);
         $this->references = new References($mappings, $stores, $this->values);
-        $this->deltas = new CollectionDeltas($this->references, $converters);
+        $this->deltas = new CollectionDeltas($this->references, $this->values);
         $this->revival = new Revival($planner, $mappings, $this->references, $this->values, $this->deltas);
     }
 
@@ -68,10 +68,9 @@ final readonly class ObjectResourceRepository implements CursorPaginatedReposito
             return null;
         }
 
-        $projection = $this->planner->plan(new ListQuery(count: 0, attributes: $attributes, excludedAttributes: $excludedAttributes), $mapping);
-        \assert($projection instanceof ObjectQuery, 'A query without filter is never constant false.');
+        $load = $this->planner->load(new ListQuery(attributes: $attributes, excludedAttributes: $excludedAttributes), $mapping);
 
-        return $this->mapper->toDocument($this->rendering($mapping, $this->rendered($mapping, $projection->load)), $object);
+        return $this->mapper->toDocument($this->rendering($mapping, $this->rendered($mapping, $load)), $object);
     }
 
     #[\Override]
@@ -193,8 +192,7 @@ final readonly class ObjectResourceRepository implements CursorPaginatedReposito
     public function patch(string $id, ResourcePatch $patch): PatchResult
     {
         $mapping = $this->mappings->get($this->name);
-        $store = $this->references->store($mapping);
-        \assert($store instanceof CollectionDeltaStore, 'The server calls patch() only for deltaAttributes().');
+        $store = $this->deltaStore($mapping);
         $deltas = array_merge(...array_values($this->deltas->collections($mapping)));
         $light = $this->rendering($mapping, array_values(array_filter($mapping->attributes, static fn (AttributeMapping $attribute): bool => self::isRelation($attribute) && !\in_array($attribute, $deltas, true))));
 
@@ -219,6 +217,14 @@ final readonly class ObjectResourceRepository implements CursorPaginatedReposito
         });
 
         return new PatchResult($this->mapper->toDocument($light, $object), $changes);
+    }
+
+    private function deltaStore(ResourceMapping $mapping): CollectionDeltaStore
+    {
+        $store = $this->references->store($mapping);
+
+        return $store instanceof CollectionDeltaStore
+            ? $store : throw new \LogicException(\sprintf('patch() needs a %s, and the store of the resource type %s is a %s.', CollectionDeltaStore::class, $this->name, $store::class));
     }
 
     /**

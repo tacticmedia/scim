@@ -80,15 +80,17 @@ final readonly class RepositoryPass implements CompilerPassInterface
 
     /**
      * @return array<string, array{class-string, ResourceType}> by service id
+     *
+     * @throws MappingException for a tagged service whose class does not exist
      */
     private function raw(ContainerBuilder $container): array
     {
         $types = [];
 
         foreach (array_keys($container->findTaggedServiceIds(self::REPOSITORY_TAG)) as $id) {
-            $class = $container->getParameterBag()->resolveValue($container->getDefinition($id)->getClass() ?? $id);
-            \assert(\is_string($class) && class_exists($class));
-            $types[$id] = [$class, $this->repositories->load($class)];
+            $class = $container->getDefinition($id)->getClass() ?? $id;
+            $reflection = $container->getReflectionClass($class) ?? throw new MappingException([\sprintf('%s: the class of the service "%s" does not exist. Correct the class of the service, or remove its %s tag.', $class, $id, self::REPOSITORY_TAG)]);
+            $types[$id] = [$reflection->getName(), $this->repositories->load($reflection->getName())];
         }
 
         return $types;

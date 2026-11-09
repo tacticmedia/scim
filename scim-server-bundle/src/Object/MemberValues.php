@@ -63,7 +63,7 @@ final readonly class MemberValues
         }
     }
 
-    private function converter(ResourceMapping $resource, AttributeMapping $attribute): ValueConverter
+    public function converter(ResourceMapping $resource, AttributeMapping $attribute): ValueConverter
     {
         $class = $attribute->converter ?? ($attribute === $resource->id ? IdConverter::class : NativeConverter::class);
         $converter = $this->converters->get($class);

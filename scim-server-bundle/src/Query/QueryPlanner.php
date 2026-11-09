@@ -103,7 +103,7 @@ final readonly class QueryPlanner
      *
      * @return list<AttributeMapping>
      */
-    private function load(ListQuery $query, ResourceMapping $mapping): array
+    public function load(ListQuery $query, ResourceMapping $mapping): array
     {
         $rendered = static fn (AttributeMapping $relation): bool => !array_any($query->excludedAttributes, $relation->path->equals(...))
             && ([] === $query->attributes || array_any($query->attributes, static fn (AttributePath $path): bool => $path->parent()->equals($relation->path)));
